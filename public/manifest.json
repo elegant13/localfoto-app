@@ -1,0 +1,10 @@
+{
+  "name": "LocalFoto Biometric Photo Studio",
+  "short_name": "LocalFoto",
+  "description": "Zero-install, 100% client-side biometric passport and visa photo PWA with 300 DPI 4x6 kiosk sheet export.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "icons": []
+}

@@ -1,0 +1,9 @@
+{
+  "description": "MediaPipe Task Vision model binaries directory. Place face_landmarker.task and selfie_segmenter.task here for offline operation.",
+  "models": [
+    "face_landmarker.task",
+    "selfie_segmenter.task",
+    "selfie_segmenter.tflite"
+  ]
+}
+

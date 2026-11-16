@@ -1,0 +1,129 @@
+{
+  "compliant_subject": {
+    "id": "compliant_subject",
+    "description": "Ideal compliant portrait against clean off-white wall (1200x1600 source)",
+    "imageBounds": { "width": 1200, "height": 1600 },
+    "mesh": {
+      "chinTip": { "x": 600, "y": 950 },
+      "skullForehead": { "x": 600, "y": 420 },
+      "segmentationCrownY": 350,
+      "leftEyePupil": { "x": 510, "y": 600 },
+      "rightEyePupil": { "x": 690, "y": 602 },
+      "mouthUpper": { "x": 600, "y": 815 },
+      "mouthLower": { "x": 600, "y": 820 },
+      "leftEyeEAR": 0.28,
+      "rightEyeEAR": 0.29,
+      "pitchDeg": 1.2,
+      "yawDeg": -0.8,
+      "backgroundDeltaL": 6.4,
+      "perimeterShadowDeltaL": 11.2,
+      "glassesConfidence": 0.04
+    }
+  },
+  "tilted_head": {
+    "id": "tilted_head",
+    "description": "Subject with 6.5 degree head roll (exceeds +/-2.5 deg tolerance)",
+    "imageBounds": { "width": 1200, "height": 1600 },
+    "mesh": {
+      "chinTip": { "x": 625, "y": 950 },
+      "skullForehead": { "x": 575, "y": 420 },
+      "segmentationCrownY": 350,
+      "leftEyePupil": { "x": 510, "y": 590 },
+      "rightEyePupil": { "x": 690, "y": 611 },
+      "mouthUpper": { "x": 605, "y": 815 },
+      "mouthLower": { "x": 605, "y": 820 },
+      "leftEyeEAR": 0.27,
+      "rightEyeEAR": 0.27,
+      "pitchDeg": 0.5,
+      "yawDeg": 1.1,
+      "backgroundDeltaL": 5.5,
+      "perimeterShadowDeltaL": 10.0,
+      "glassesConfidence": 0.02
+    }
+  },
+  "smiling_open_mouth": {
+    "id": "smiling_open_mouth",
+    "description": "Subject smiling with open mouth / visible teeth (inter-lip / IPD > 0.08)",
+    "imageBounds": { "width": 1200, "height": 1600 },
+    "mesh": {
+      "chinTip": { "x": 600, "y": 965 },
+      "skullForehead": { "x": 600, "y": 420 },
+      "segmentationCrownY": 350,
+      "leftEyePupil": { "x": 510, "y": 600 },
+      "rightEyePupil": { "x": 690, "y": 600 },
+      "mouthUpper": { "x": 600, "y": 810 },
+      "mouthLower": { "x": 600, "y": 842 },
+      "leftEyeEAR": 0.25,
+      "rightEyeEAR": 0.25,
+      "pitchDeg": 0.0,
+      "yawDeg": 0.0,
+      "backgroundDeltaL": 7.0,
+      "perimeterShadowDeltaL": 12.0,
+      "glassesConfidence": 0.03
+    }
+  },
+  "voluminous_hair": {
+    "id": "voluminous_hair",
+    "description": "Subject with voluminous hair / turban where segmentationCrownY is 140px above Landmark 10",
+    "imageBounds": { "width": 1200, "height": 1600 },
+    "mesh": {
+      "chinTip": { "x": 600, "y": 960 },
+      "skullForehead": { "x": 600, "y": 460 },
+      "segmentationCrownY": 320,
+      "leftEyePupil": { "x": 510, "y": 610 },
+      "rightEyePupil": { "x": 690, "y": 610 },
+      "mouthUpper": { "x": 600, "y": 825 },
+      "mouthLower": { "x": 600, "y": 829 },
+      "leftEyeEAR": 0.28,
+      "rightEyeEAR": 0.28,
+      "pitchDeg": -1.0,
+      "yawDeg": 0.5,
+      "backgroundDeltaL": 8.2,
+      "perimeterShadowDeltaL": 14.5,
+      "glassesConfidence": 0.01
+    }
+  },
+  "shadow_heavy_background": {
+    "id": "shadow_heavy_background",
+    "description": "Subject with uneven wall lighting (delta L* = 19.5) and cast head perimeter shadow (delta L* = 34.0)",
+    "imageBounds": { "width": 1200, "height": 1600 },
+    "mesh": {
+      "chinTip": { "x": 600, "y": 950 },
+      "skullForehead": { "x": 600, "y": 420 },
+      "segmentationCrownY": 350,
+      "leftEyePupil": { "x": 510, "y": 600 },
+      "rightEyePupil": { "x": 690, "y": 600 },
+      "mouthUpper": { "x": 600, "y": 815 },
+      "mouthLower": { "x": 600, "y": 819 },
+      "leftEyeEAR": 0.29,
+      "rightEyeEAR": 0.29,
+      "pitchDeg": 0.5,
+      "yawDeg": -0.5,
+      "backgroundDeltaL": 19.5,
+      "perimeterShadowDeltaL": 34.0,
+      "glassesConfidence": 0.05
+    }
+  },
+  "glasses_wearing": {
+    "id": "glasses_wearing",
+    "description": "Subject wearing eyeglasses with bridge occlusion & specular reflection",
+    "imageBounds": { "width": 1200, "height": 1600 },
+    "mesh": {
+      "chinTip": { "x": 600, "y": 950 },
+      "skullForehead": { "x": 600, "y": 420 },
+      "segmentationCrownY": 350,
+      "leftEyePupil": { "x": 510, "y": 600 },
+      "rightEyePupil": { "x": 690, "y": 600 },
+      "mouthUpper": { "x": 600, "y": 815 },
+      "mouthLower": { "x": 600, "y": 819 },
+      "leftEyeEAR": 0.28,
+      "rightEyeEAR": 0.28,
+      "pitchDeg": 0.0,
+      "yawDeg": 0.0,
+      "backgroundDeltaL": 6.0,
+      "perimeterShadowDeltaL": 9.5,
+      "glassesConfidence": 0.78
+    }
+  }
+}
+
