@@ -122,6 +122,8 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
     text: '',
     time: 0,
   });
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const lastToneTimeRef = useRef<number>(0);
 
   const [wizardStage, setWizardStage] = useState<WizardStage>('lighting_guide');
   const [mode, setMode] = useState<'camera' | 'simulation' | 'upload'>('camera');
@@ -152,8 +154,84 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
     modeRef.current = mode;
   }, [mode]);
 
+  /**
+   * Plays a soft, non-jarring harmonic sine chime via Web Audio API for continuous
+   * accessibility feedback (similar to Pixel Guided Frame).
+   */
+  const playGentleAudioChime = useCallback(
+    (kind: 'pulse' | 'locked' | 'captured', passedCount = 0) => {
+      if (!audioEnabled || typeof window === 'undefined') return;
+      const now = performance.now();
+      if (kind === 'pulse' && now - lastToneTimeRef.current < 1800) {
+        return;
+      }
+      lastToneTimeRef.current = now;
+
+      try {
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext })
+            .webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AudioCtx();
+        }
+        const ctx = audioCtxRef.current;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+
+        const t0 = ctx.currentTime;
+        const playNote = (
+          freq: number,
+          startOffset: number,
+          duration: number,
+          peakGain = 0.032
+        ) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t0 + startOffset);
+          gain.gain.setValueAtTime(0.0001, t0 + startOffset);
+          gain.gain.exponentialRampToValueAtTime(
+            peakGain,
+            t0 + startOffset + 0.035
+          );
+          gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            t0 + startOffset + duration
+          );
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t0 + startOffset);
+          osc.stop(t0 + startOffset + duration + 0.01);
+        };
+
+        if (kind === 'captured') {
+          playNote(523.25, 0, 0.14, 0.045); // C5
+          playNote(659.25, 0.11, 0.14, 0.045); // E5
+          playNote(783.99, 0.22, 0.24, 0.05); // G5
+        } else if (kind === 'locked') {
+          playNote(523.25, 0, 0.16, 0.04); // C5
+          playNote(659.25, 0.12, 0.22, 0.04); // E5
+        } else {
+          // Warm alignment pulse whose pitch gently rises as more checks pass (330Hz .. 494Hz)
+          const baseFreq = 330 + Math.min(9, passedCount) * 18;
+          playNote(baseFreq, 0, 0.22, 0.025);
+        }
+      } catch {
+        // Ignore Web Audio errors in headless/restricted environments
+      }
+    },
+    [audioEnabled]
+  );
+
+  /**
+   * Continuous, non-jarring spoken coaching. Never clips an active sentence mid-word
+   * unless a high-priority lock state occurs, and gently repeats guidance every 3.6s.
+   */
   const speakCue = useCallback(
-    (message: string) => {
+    (message: string, priority = false) => {
       if (
         !audioEnabled ||
         wizardStage !== 'fullscreen_camera' ||
@@ -163,21 +241,33 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
         return;
       }
       const now = performance.now();
+      const synth = window.speechSynthesis;
+
+      // Do not cut off an ongoing sentence mid-word unless priority is set
+      if (!priority && synth.speaking) {
+        return;
+      }
       if (
+        !priority &&
         lastSpokenCueRef.current.text === message &&
-        now - lastSpokenCueRef.current.time < 4500
+        now - lastSpokenCueRef.current.time < 3600
       ) {
         return;
       }
-      if (now - lastSpokenCueRef.current.time < 2200) {
+      if (!priority && now - lastSpokenCueRef.current.time < 2400) {
         return;
       }
+
       lastSpokenCueRef.current = { text: message, time: now };
       try {
-        window.speechSynthesis.cancel();
+        if (priority && synth.speaking) {
+          synth.cancel();
+        }
         const utterance = new SpeechSynthesisUtterance(message);
-        utterance.rate = 1.05;
-        window.speechSynthesis.speak(utterance);
+        utterance.rate = 0.97;
+        utterance.pitch = 1.0;
+        utterance.volume = 0.9;
+        synth.speak(utterance);
       } catch {
         // Ignore speech synthesis errors
       }
@@ -571,26 +661,44 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
     const updateHudLoop = () => {
       const now = performance.now();
+      const lensReminder =
+        facingMode === 'user'
+          ? 'Look up at the top camera lens, not at the screen.'
+          : 'Look directly into the rear camera lens.';
+
       if (!faceDetected || !validationReport) {
         validSinceRef.current = null;
         setLockProgressPct(0);
         setHudState('red');
         setLiveInstruction('Position your face inside the oval');
-        speakCue('Position your face inside the biometric oval.');
+        playGentleAudioChime('pulse', 1);
+        speakCue(
+          `Center your face inside the oval. ${lensReminder}`
+        );
       } else if (
         validationReport.overallPass &&
         consecutiveCompliantFramesRef.current >= minConsecutiveFrames
       ) {
         if (validSinceRef.current === null) {
           validSinceRef.current = now;
+          playGentleAudioChime('locked', 9);
+          speakCue(
+            facingMode === 'user'
+              ? 'Aligned. Look up at the top camera lens, not the screen. Hold still.'
+              : 'Aligned. Look straight into the rear camera lens and hold still.',
+            true
+          );
         }
         const elapsed = now - validSinceRef.current;
         const pct = Math.min(100, Math.round((elapsed / holdDurationMs) * 100));
         setLockProgressPct(pct);
 
         setHudState('green');
-        setLiveInstruction(`Hold steady — Auto-capturing (${pct}%)`);
-        speakCue('Hold still. Capturing photo.');
+        setLiveInstruction(
+          facingMode === 'user'
+            ? `LOOK UP AT TOP LENS — Capturing (${pct}%)`
+            : `LOOK AT REAR LENS — Capturing (${pct}%)`
+        );
 
         if (
           autoShutterEnabled &&
@@ -598,54 +706,58 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
           elapsed >= holdDurationMs
         ) {
           autoCapturedRef.current = true;
+          playGentleAudioChime('captured', 9);
           triggerCapture();
         }
       } else if (validationReport.overallPass) {
         setHudState('amber');
         setLockProgressPct(15);
-        setLiveInstruction('Aligned — hold still...');
+        setLiveInstruction('Aligned — look directly at camera lens...');
       } else {
         validSinceRef.current = null;
         setLockProgressPct(0);
-        const failedChecks = [
-          !validationReport.isRollCompliant,
-          !validationReport.isPitchYawCompliant,
-          !validationReport.isMouthClosed,
-          !validationReport.isBlinkFree,
-          !validationReport.isLightingUniform,
-          !validationReport.isHeadPerimeterShadowFree,
-          !validationReport.isGlassesFree,
-          !validationReport.isHeadRatioCompliant,
-          !validationReport.isEyeLevelCompliant,
-        ].filter(Boolean).length;
+        const checks = [
+          validationReport.isRollCompliant,
+          validationReport.isPitchYawCompliant,
+          validationReport.isMouthClosed,
+          validationReport.isBlinkFree,
+          validationReport.isLightingUniform,
+          validationReport.isHeadPerimeterShadowFree,
+          validationReport.isGlassesFree,
+          validationReport.isHeadRatioCompliant,
+          validationReport.isEyeLevelCompliant,
+        ];
+        const passedCount = checks.filter(Boolean).length;
+        const failedCount = checks.length - passedCount;
 
-        setHudState(failedChecks >= 2 ? 'red' : 'amber');
+        setHudState(failedCount >= 2 ? 'red' : 'amber');
+        playGentleAudioChime('pulse', passedCount);
 
         if (positioningHint) {
           setLiveInstruction(positioningHint);
-          speakCue(positioningHint);
+          speakCue(`${positioningHint}. ${lensReminder}`);
         } else if (!validationReport.isHeadRatioCompliant) {
           const msg = 'Move closer or further so your head fits the oval';
           setLiveInstruction(msg);
-          speakCue(msg);
+          speakCue(`${msg}. ${lensReminder}`);
         } else if (!validationReport.isEyeLevelCompliant) {
           const msg = 'Align your eyes inside the eye corridor';
           setLiveInstruction(msg);
-          speakCue(msg);
+          speakCue(`${msg}. ${lensReminder}`);
         } else if (!validationReport.isRollCompliant) {
           const msg = 'Level your head horizontally';
           setLiveInstruction(msg);
-          speakCue(msg);
+          speakCue(`${msg}. ${lensReminder}`);
         } else if (!validationReport.isPitchYawCompliant) {
-          const msg = 'Look straight at the camera lens';
+          const msg = 'Look straight into the camera lens';
           setLiveInstruction(msg);
-          speakCue(msg);
+          speakCue(`${msg}, not at the screen.`);
         } else if (!validationReport.isMouthClosed) {
           const msg = 'Keep a neutral expression with mouth closed';
           setLiveInstruction(msg);
-          speakCue(msg);
+          speakCue(`${msg}. ${lensReminder}`);
         } else if (!validationReport.isBlinkFree) {
-          const msg = 'Keep both eyes open';
+          const msg = 'Keep both eyes open, looking at the lens';
           setLiveInstruction(msg);
           speakCue(msg);
         } else if (!validationReport.isGlassesFree) {
@@ -669,7 +781,9 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
     positioningHint,
     wizardStage,
     mode,
+    facingMode,
     autoShutterEnabled,
+    playGentleAudioChime,
     speakCue,
     triggerCapture,
   ]);
@@ -878,10 +992,11 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#1F1F1F]">
-                    No glasses &amp; neutral pose
+                    Look at the camera lens, not the screen
                   </h3>
                   <p className="text-xs text-[#444746] mt-0.5">
-                    Remove glasses/hats, keep head level, and mouth closed.
+                    Remove glasses, keep mouth closed, and look directly into
+                    the physical camera lens (follow our gentle audio cues).
                   </p>
                 </div>
               </div>
@@ -955,7 +1070,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
                       Rear Camera
                     </h3>
                     <p className="text-xs text-[#444746]">
-                      Best quality • Zero selfie distortion
+                      Look directly into the back camera lens • Voice-guided
                     </p>
                   </div>
                 </div>
@@ -980,7 +1095,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
                       Front Camera
                     </h3>
                     <p className="text-xs text-[#444746]">
-                      See alignment guides while taking your own photo
+                      Look up at the top camera lens — not at your screen image
                     </p>
                   </div>
                 </div>
@@ -1021,8 +1136,26 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
       {/* STEP 2B: PIXEL CAMERA-STYLE FULL-SCREEN BIOMETRIC VIEWFINDER */}
       {wizardStage === 'fullscreen_camera' && (
         <div className="fixed inset-0 z-50 bg-[#0E0E0F] text-white flex flex-col justify-between overflow-hidden select-none">
+          {/* PHYSICAL CAMERA LENS TARGET BEACON (Pinned to Very Top-Center Edge) */}
+          <div className="relative z-30 w-full flex flex-col items-center pt-1.5 pb-1 bg-black/90 border-b border-white/10">
+            <div
+              className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-extrabold tracking-wide uppercase transition-colors ${
+                hudState === 'green'
+                  ? 'bg-[#81C995] text-[#0F5223] shadow-lg'
+                  : 'bg-[#FDD663]/95 text-[#1F1F1F]'
+              }`}
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-current animate-ping" />
+              <span>
+                {facingMode === 'user'
+                  ? '↑ LOOK UP HERE AT CAMERA LENS — NOT AT THE SCREEN ↑'
+                  : '👁 LOOK DIRECTLY INTO THE REAR CAMERA LENS'}
+              </span>
+            </div>
+          </div>
+
           {/* Top Material 3 Floating Camera Bar */}
-          <div className="relative z-20 px-4 pt-3 pb-2.5 bg-gradient-to-b from-black/85 via-black/50 to-transparent flex items-center justify-between gap-2">
+          <div className="relative z-20 px-4 pt-2 pb-2 bg-gradient-to-b from-black/85 via-black/50 to-transparent flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => {
@@ -1128,6 +1261,20 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
                 className="absolute inset-0 w-full h-full pointer-events-none"
                 data-testid="biometric-svg-hud"
               >
+                {/* Top Physical Camera Lens Direction Pointer */}
+                <text
+                  x="50"
+                  y="4.5"
+                  fill="#FDD663"
+                  fontSize="2.5"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                >
+                  {facingMode === 'user'
+                    ? '↑ LOOK UP AT CAMERA LENS (NOT SCREEN) ↑'
+                    : 'LOOK DIRECTLY INTO REAR CAMERA LENS'}
+                </text>
+
                 {/* Outer Max Crown/Chin Tolerance Oval */}
                 <ellipse
                   cx="50"

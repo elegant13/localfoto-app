@@ -32,8 +32,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onGetStarted }) => {
     {
       icon: <Camera className="w-5 h-5 text-[#0B57D0]" />,
       bg: 'bg-[#D3E3FD]',
-      title: 'Guided Full-Screen Capture',
-      desc: 'Align your face in the oval for auto-capture, or tap the shutter pill anytime.',
+      title: 'Voice-Guided Camera Capture',
+      desc: 'Follow gentle audio cues, look directly into the camera lens (not the screen), and let auto-shutter snap your photo.',
     },
     {
       icon: <MapPin className="w-5 h-5 text-[#0B57D0]" />,
