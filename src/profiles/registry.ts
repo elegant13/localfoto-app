@@ -93,13 +93,13 @@ export const INDIA_OCI_PROFILE: PhotoProfile = {
     maxFromBottom: 0.69,
   },
   chinBottomClearanceMin: 0.15,
-  allowedBackgrounds: ['pure_white', 'off_white'],
+  allowedBackgrounds: ['pure_white', 'off_white', 'light_gray'],
   glassesAllowed: false,
   teethAllowed: false,
   digitalSubmissionSpec: {
     minWidthPx: 600,
-    maxWidthPx: 1200,
-    maxFileSizeBytes: 10 * 1024 * 1024,
+    maxWidthPx: 900,
+    maxFileSizeBytes: 200 * 1024, // 200 KB max for official Indian OCI portal
     colorSpace: 'sRGB',
   },
   printSheetSpec: {
@@ -125,7 +125,11 @@ export const CANADA_PASSPORT_PROFILE: PhotoProfile = {
     maxRatio: 36.0 / 70.0,
     targetRatio: 33.5 / 70.0,
   },
-  chinBottomClearanceMin: 0.18,
+  eyeConstraints: {
+    minFromBottom: 0.48,
+    maxFromBottom: 0.66,
+  },
+  chinBottomClearanceMin: 0.20,
   allowedBackgrounds: ['pure_white', 'off_white'],
   glassesAllowed: false,
   teethAllowed: false,
