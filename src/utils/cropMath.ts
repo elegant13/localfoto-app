@@ -348,9 +348,12 @@ export function solveConstrainedCrop(
   let xMin = xCenter - cropWidth / 2;
   let yMin = bestYMin;
 
-  // Clamp horizontal position within imageBounds if possible while preserving biometric vertical geometry
+  // Clamp horizontal and vertical positions within imageBounds to avoid white edge slivers
   if (imageBounds.width >= cropWidth) {
     xMin = Math.max(0, Math.min(imageBounds.width - cropWidth, xMin));
+  }
+  if (imageBounds.height >= cropHeight) {
+    yMin = Math.max(0, Math.min(imageBounds.height - cropHeight, yMin));
   }
 
   const yMax = yMin + cropHeight;
