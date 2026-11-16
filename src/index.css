@@ -6,15 +6,19 @@
     --md-sys-color-on-primary: #ffffff;
     --md-sys-color-primary-container: #d3e3fd;
     --md-sys-color-on-primary-container: #041e49;
-    --md-sys-color-secondary-container: #e8def8;
     --md-sys-color-surface: #f8fafd;
-    --md-sys-color-surface-container-low: #f3f6fc;
-    --md-sys-color-surface-container: #edf2fa;
-    --md-sys-color-surface-container-high: #e4ebf5;
     --md-sys-color-on-surface: #1f1f1f;
     --md-sys-color-on-surface-variant: #444746;
-    --md-sys-color-outline: #747775;
-    --md-sys-color-outline-variant: #c4c7c5;
+  }
+
+  html.dark {
+    --md-sys-color-primary: #8ab4f8;
+    --md-sys-color-on-primary: #041e49;
+    --md-sys-color-primary-container: #17325c;
+    --md-sys-color-on-primary-container: #d3e3fd;
+    --md-sys-color-surface: #0f1117;
+    --md-sys-color-on-surface: #e3e8f0;
+    --md-sys-color-on-surface-variant: #9aa0ac;
   }
 
   body {
@@ -29,9 +33,69 @@
   }
 }
 
+/* Material Design 3 Dark Theme Surface & Token Remapping */
+html.dark body,
+html.dark .bg-\[\#F8FAFD\],
+html.dark .bg-\[\#F8FAFD\]\/95 {
+  background-color: #0f1117 !important;
+  color: #e3e8f0 !important;
+}
+
+html.dark .bg-white {
+  background-color: #1b1e26 !important;
+}
+
+html.dark .bg-\[\#F3F6FC\],
+html.dark .bg-\[\#EDF2FA\] {
+  background-color: #262a34 !important;
+}
+
+html.dark .bg-\[\#D3E3FD\] {
+  background-color: #17325c !important;
+}
+
+html.dark .bg-\[\#E6F4EA\] {
+  background-color: #113821 !important;
+}
+
+html.dark .bg-\[\#FEF7E0\] {
+  background-color: #3e2d08 !important;
+}
+
+html.dark .text-\[\#1F1F1F\],
+html.dark .text-\[\#041E49\] {
+  color: #e3e8f0 !important;
+}
+
+html.dark .text-\[\#444746\] {
+  color: #9aa0ac !important;
+}
+
+html.dark .text-\[\#0B57D0\] {
+  color: #8ab4f8 !important;
+}
+
+html.dark .text-\[\#137333\] {
+  color: #81c995 !important;
+}
+
+html.dark .text-\[\#B06000\] {
+  color: #fdd663 !important;
+}
+
+html.dark .border-\[\#E1E3E1\],
+html.dark .border-\[\#C4C7C5\],
+html.dark .border-\[\#C4C7C5\]\/60 {
+  border-color: #303542 !important;
+}
+
 /* Material Design 3 Elevation & Surface Utilities */
 .m3-elevation-1 {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 1px 3px 1px rgba(0, 0, 0, 0.06);
+}
+
+html.dark .m3-elevation-1 {
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.35);
 }
 
 .m3-elevation-2 {
