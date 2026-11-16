@@ -1,7 +1,5 @@
-const CACHE_NAME = 'localfoto-pwa-v1';
+const CACHE_NAME = 'localfoto-pwa-v2';
 const OFFLINE_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/models/manifest.json',
   '/models/face_landmarker.task',
@@ -31,12 +29,30 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Cache-first only for static heavy ML models in /models/
+  if (url.pathname.startsWith('/models/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
+          }
+          return res;
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-first for HTML, JS, and CSS so new deployments appear immediately
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
         if (
           networkResponse &&
           networkResponse.status === 200 &&
@@ -48,7 +64,7 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
