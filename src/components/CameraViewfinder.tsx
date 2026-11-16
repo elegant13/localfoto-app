@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Smartphone,
-  ShieldCheck,
   Ruler,
 } from 'lucide-react';
 import { PhotoProfile } from '../types/profile';
@@ -756,242 +755,173 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-md mx-auto">
       {/* Hidden simulation canvas for automated tests & simulator fallback */}
       <canvas ref={simCanvasRef} className="hidden" />
 
-      {/* M3 Segmented Progress Bar (Steps 1 & 2) */}
-      {wizardStage !== 'fullscreen_camera' && (
-        <div className="mb-5">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-1.5 flex-1 rounded-full bg-[#0B57D0]" />
-            <div
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                wizardStage === 'camera_choice'
-                  ? 'bg-[#0B57D0]'
-                  : 'bg-[#D3E3FD]'
-              }`}
-            />
-            <div className="h-1.5 flex-1 rounded-full bg-[#D3E3FD]" />
-          </div>
-          <div className="flex items-center justify-between text-xs font-medium text-[#444746]">
-            <span>
-              {wizardStage === 'lighting_guide'
-                ? 'Step 1 of 3 • Environment & Light'
-                : 'Step 2 of 3 • Select Camera'}
-            </span>
-            <span className="text-[#0B57D0] font-semibold">
-              {activeProfile.displayName}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 1: MATERIAL 3 ENVIRONMENT & LIGHTING SETUP */}
+      {/* STEP 1: MINIMALIST ENVIRONMENT & LIGHTING CHECK */}
       {wizardStage === 'lighting_guide' && (
-        <div className="space-y-4">
-          {/* M3 Hero Header Card */}
-          <div className="bg-[#D3E3FD]/55 rounded-[28px] p-5 border border-[#D3E3FD]">
-            <h2 className="text-2xl font-bold text-[#041E49] tracking-tight">
-              Set up your lighting &amp; background
-            </h2>
-            <p className="text-sm text-[#1F1F1F]/80 mt-1 leading-relaxed">
-              Follow these 3 quick guidelines so your passport photo passes
-              biometric checks on the first take.
-            </p>
-          </div>
+        <div className="flex flex-col justify-between min-h-[calc(100dvh-5.5rem)] py-2">
+          <div className="space-y-4">
+            <div className="px-1 space-y-1">
+              <span className="text-xs font-bold text-[#0B57D0] uppercase tracking-wider">
+                Step 1 of 2 • Quick Setup
+              </span>
+              <h2 className="text-2xl font-extrabold text-[#1F1F1F] tracking-tight">
+                Environment &amp; Lighting
+              </h2>
+            </div>
 
-          {/* 3 Material 3 Surface Cards */}
-          <div className="space-y-3">
-            <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#D3E3FD] text-[#0B57D0] flex items-center justify-center shrink-0 font-bold text-sm">
-                <Ruler className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-[#1F1F1F]">
+            <div className="bg-white rounded-[28px] p-5 m3-elevation-1 border border-[#E1E3E1] space-y-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#D3E3FD] text-[#0B57D0] flex items-center justify-center shrink-0">
+                  <Ruler className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1F1F]">
                     Stand ~2 ft from a white wall
                   </h3>
+                  <p className="text-xs text-[#444746] mt-0.5">
+                    Use a plain white or off-white background to avoid shadows.
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-[#444746] leading-relaxed">
-                  Stand about <strong>2 feet in front</strong> of a plain white
-                  or off-white wall so your head doesn&apos;t cast a dark shadow
-                  behind you.
-                </p>
               </div>
-            </div>
 
-            <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FEF7E0] text-[#B06000] flex items-center justify-center shrink-0">
-                <Sun className="w-6 h-6" />
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#FEF7E0] text-[#B06000] flex items-center justify-center shrink-0">
+                  <Sun className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1F1F]">
+                    Light from the front
+                  </h3>
+                  <p className="text-xs text-[#444746] mt-0.5">
+                    Face a window or lamp directly so light falls evenly on you.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-0.5">
-                <h3 className="text-base font-bold text-[#1F1F1F]">
-                  Light falling from the front
-                </h3>
-                <p className="text-xs sm:text-sm text-[#444746] leading-relaxed">
-                  Face a window or room lamp directly so{' '}
-                  <strong>even light falls on the front of your face</strong>{' '}
-                  with no side shadows or backlighting.
-                </p>
-              </div>
-            </div>
 
-            <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#E6F4EA] text-[#137333] flex items-center justify-center shrink-0">
-                <UserCheck className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5">
-                <h3 className="text-base font-bold text-[#1F1F1F]">
-                  Remove glasses &amp; neutral pose
-                </h3>
-                <p className="text-xs sm:text-sm text-[#444746] leading-relaxed">
-                  Take off eyeglasses and hats. Look straight ahead with
-                  shoulders level and your mouth closed.
-                </p>
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#E6F4EA] text-[#137333] flex items-center justify-center shrink-0">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1F1F]">
+                    No glasses &amp; neutral pose
+                  </h3>
+                  <p className="text-xs text-[#444746] mt-0.5">
+                    Remove glasses/hats, keep head level, and mouth closed.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* M3 Tonal Privacy Chip Card */}
-          <div className="bg-[#EDF2FA] rounded-2xl px-4 py-3 flex items-center gap-3 text-xs text-[#041E49]">
-            <ShieldCheck className="w-5 h-5 text-[#0B57D0] shrink-0" />
-            <span>
-              <strong>100% On-Device Privacy:</strong> All biometric checks and
-              4×6&quot; sheet creation run locally in your browser.
-            </span>
-          </div>
+          <div className="pt-4 space-y-2.5">
+            <button
+              type="button"
+              onClick={() => setWizardStage('camera_choice')}
+              className="w-full h-14 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] active:bg-[#062E6F] text-white font-bold text-base shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Next</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
 
-          {/* M3 Sticky Mobile Bottom Action Bar */}
-          <div className="fixed bottom-0 inset-x-0 z-20 bg-[#F8FAFD]/95 backdrop-blur-md border-t border-[#E1E3E1] p-4 sm:static sm:bg-transparent sm:border-0 sm:p-0 sm:pt-2">
-            <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setWizardStage('camera_choice')}
-                className="w-full h-14 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] active:bg-[#062E6F] text-white font-bold text-base shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Next: Choose Camera</span>
-                <ArrowRight className="w-5 h-5" />
-              </button>
-
-              <label className="w-full sm:w-auto sm:shrink-0 h-12 px-5 rounded-full bg-[#D3E3FD] hover:bg-[#C2D7FC] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition">
-                <Upload className="w-4 h-4 text-[#0B57D0]" />
-                <span>Upload Photo</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
+            <label className="w-full h-11 rounded-full bg-[#EDF2FA] hover:bg-[#E4EBF5] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition">
+              <Upload className="w-4 h-4 text-[#0B57D0]" />
+              <span>Or upload an existing photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
       )}
 
-      {/* STEP 2A: MATERIAL 3 CAMERA LENS SELECTION */}
+      {/* STEP 2A: MINIMALIST CAMERA LENS SELECTION */}
       {wizardStage === 'camera_choice' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h2 className="text-2xl font-bold text-[#1F1F1F] tracking-tight">
-                Select your camera
-              </h2>
-              <p className="text-sm text-[#444746] mt-0.5">
-                Opens in full screen with live alignment guides and auto-shutter
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setWizardStage('lighting_guide')}
-              className="h-10 px-4 rounded-full bg-[#EDF2FA] hover:bg-[#E4EBF5] text-[#041E49] text-xs font-semibold flex items-center gap-1.5 shrink-0 cursor-pointer transition"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-          </div>
-
-          {/* Option 1: Rear Camera (Primary M3 Card) */}
-          <div
-            onClick={() => launchFullScreenCamera('environment')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                launchFullScreenCamera('environment');
-              }
-            }}
-            className="bg-white hover:bg-[#F3F6FC] rounded-[28px] p-5 m3-elevation-2 border-2 border-[#0B57D0] transition cursor-pointer space-y-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#D3E3FD] text-[#0B57D0] flex items-center justify-center shrink-0">
-                <Camera className="w-6 h-6" />
+        <div className="flex flex-col justify-between min-h-[calc(100dvh-5.5rem)] py-2">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <div>
+                <span className="text-xs font-bold text-[#0B57D0] uppercase tracking-wider">
+                  Step 2 of 2 • Camera
+                </span>
+                <h2 className="text-2xl font-extrabold text-[#1F1F1F] tracking-tight">
+                  Choose Camera
+                </h2>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#E6F4EA] text-[#137333]">
-                Recommended • Best Quality
-              </span>
+
+              <button
+                type="button"
+                onClick={() => setWizardStage('lighting_guide')}
+                className="h-9 px-3.5 rounded-full bg-[#EDF2FA] text-[#041E49] text-xs font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back
+              </button>
             </div>
 
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-[#1F1F1F]">
-                Rear Camera (Back Lens)
-              </h3>
-              <p className="text-xs sm:text-sm text-[#444746] leading-relaxed">
-                Uses your phone&apos;s main rear camera sensor with zero wide-angle
-                distortion. Best when someone holds the phone ~4 ft away or with
-                voice guidance enabled.
-              </p>
-            </div>
+            <div className="space-y-3">
+              {/* Option 1: Rear Camera */}
+              <button
+                type="button"
+                onClick={() => launchFullScreenCamera('environment')}
+                className="w-full text-left bg-white hover:bg-[#F3F6FC] rounded-[28px] p-5 m3-elevation-1 border-2 border-[#0B57D0] transition cursor-pointer flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#D3E3FD] text-[#0B57D0] flex items-center justify-center shrink-0">
+                    <Camera className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4EA] text-[#137333] mb-1">
+                      Recommended
+                    </span>
+                    <h3 className="text-base font-bold text-[#1F1F1F]">
+                      Rear Camera
+                    </h3>
+                    <p className="text-xs text-[#444746]">
+                      Best quality • Zero selfie distortion
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="w-5 h-5 text-[#0B57D0] shrink-0" />
+              </button>
 
-            <div className="w-full h-12 rounded-full bg-[#0B57D0] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-xs">
-              <Camera className="w-4 h-4" />
-              <span>Open Rear Camera</span>
+              {/* Option 2: Front Camera */}
+              <button
+                type="button"
+                onClick={() => launchFullScreenCamera('user')}
+                className="w-full text-left bg-white hover:bg-[#F3F6FC] rounded-[28px] p-5 m3-elevation-1 border border-[#C4C7C5] transition cursor-pointer flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#EDF2FA] text-[#041E49] flex items-center justify-center shrink-0">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#EDF2FA] text-[#444746] mb-1">
+                      Selfie Mode
+                    </span>
+                    <h3 className="text-base font-bold text-[#1F1F1F]">
+                      Front Camera
+                    </h3>
+                    <p className="text-xs text-[#444746]">
+                      See alignment guides while taking your own photo
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="w-5 h-5 text-[#444746] shrink-0" />
+              </button>
             </div>
           </div>
 
-          {/* Option 2: Front Camera (Secondary M3 Card) */}
-          <div
-            onClick={() => launchFullScreenCamera('user')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                launchFullScreenCamera('user');
-              }
-            }}
-            className="bg-white hover:bg-[#F3F6FC] rounded-[28px] p-5 m3-elevation-1 border border-[#C4C7C5] transition cursor-pointer space-y-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#EDF2FA] text-[#041E49] flex items-center justify-center shrink-0">
-                <Smartphone className="w-6 h-6" />
-              </div>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#EDF2FA] text-[#444746]">
-                Solo Selfie Mode
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-[#1F1F1F]">
-                Front Camera (Selfie Lens)
-              </h3>
-              <p className="text-xs sm:text-sm text-[#444746] leading-relaxed">
-                Take your own photo while watching the biometric oval and eye
-                corridor guides on your screen.
-              </p>
-            </div>
-
-            <div className="w-full h-12 rounded-full bg-[#D3E3FD] text-[#041E49] font-semibold text-sm flex items-center justify-center gap-2">
-              <Smartphone className="w-4 h-4 text-[#0B57D0]" />
-              <span>Open Front Camera</span>
-            </div>
-          </div>
-
-          {/* Bottom Secondary Actions */}
-          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-[#444746]">
-            <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[#EDF2FA] text-[#0B57D0] cursor-pointer transition">
+          <div className="pt-4 flex items-center justify-between text-xs text-[#444746] px-1">
+            <label className="inline-flex items-center gap-1.5 text-[#0B57D0] font-semibold cursor-pointer">
               <Upload className="w-4 h-4" />
-              <span>Import existing photo from gallery</span>
+              <span>Upload Photo</span>
               <input
                 type="file"
                 accept="image/*"
@@ -1008,10 +938,10 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
                 modeRef.current = 'simulation';
                 setWizardStage('fullscreen_camera');
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-[#EDF2FA] text-[#444746] cursor-pointer transition"
+              className="inline-flex items-center gap-1 text-[#444746] hover:text-[#0B57D0] cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-[#0B57D0]" />
-              <span>Biometric Simulator</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Simulator</span>
             </button>
           </div>
         </div>

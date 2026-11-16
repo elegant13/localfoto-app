@@ -72,7 +72,7 @@ export const App: React.FC = () => {
       </header>
 
       {/* Main Mobile-First Content Area */}
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 pt-4 pb-28 sm:pb-12">
+      <main className="flex-1 w-full max-w-md mx-auto px-4 py-3">
         {!hasStarted ? (
           <HomePage
             profiles={profiles}
