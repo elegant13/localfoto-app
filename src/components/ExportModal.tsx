@@ -211,13 +211,16 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       aria-labelledby="export-modal-title"
     >
       {/* Compact Header */}
-      <div className="px-1">
+      <div className="flex items-center justify-between gap-2 px-1">
         <h2
           id="export-modal-title"
           className="text-xl font-extrabold text-[#1F1F1F] tracking-tight"
         >
-          Review &amp; Print 4×6&quot;
+          Review &amp; Print
         </h2>
+        <span className="px-2.5 py-1 rounded-full bg-[#EDF2FA] text-[#041E49] text-[11px] font-semibold">
+          {profile.displayName}
+        </span>
       </div>
 
       {/* Card 1: 4x6 Outcome Preview & Save */}
@@ -265,7 +268,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <img
                 src={digitalUrl}
                 alt="Digital Submission Portrait"
-                className="w-36 h-36 object-cover rounded-xl border border-[#C4C7C5] bg-white"
+                className="w-40 object-contain rounded-xl border border-[#C4C7C5] bg-white"
+                style={{ aspectRatio: `${profile.aspectRatio}` }}
               />
             )}
           </div>
