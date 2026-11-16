@@ -105,9 +105,9 @@ export const LocalFotoLogo: React.FC<LocalFotoLogoProps> = ({
           y="21"
           width="18"
           height="22"
-          rx="3"
+          rx="2"
           stroke="#C4EED0"
-          strokeWidth="2.4"
+          strokeWidth="1.4"
         />
         {/* Person Silhouette */}
         <circle cx="32" cy="28" r="3.6" fill="#FFFFFF" />
