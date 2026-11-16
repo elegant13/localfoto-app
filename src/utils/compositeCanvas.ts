@@ -180,13 +180,18 @@ export function renderCroppedPortraitToCanvas(
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, targetWidthPx, targetHeightPx);
 
+  const rad = (crop.rollCorrectionDeg * Math.PI) / 180;
+  // Slight overscan factor (1 + |sin(theta)| * 1.15) prevents affine rotation from exposing white corner slivers
+  const rotSafeScale = 1 + Math.abs(Math.sin(rad)) * 1.15;
+
   const scaleX = targetWidthPx / crop.cropWidth;
   const scaleY = targetHeightPx / crop.cropHeight;
 
-  ctx.scale(scaleX, scaleY);
-  ctx.translate(-crop.xMin, -crop.yMin);
+  ctx.translate(targetWidthPx / 2, targetHeightPx / 2);
+  ctx.scale(scaleX * rotSafeScale, scaleY * rotSafeScale);
+  ctx.translate(-crop.cropWidth / 2 - crop.xMin, -crop.cropHeight / 2 - crop.yMin);
   ctx.translate(eyePivot.x, eyePivot.y);
-  ctx.rotate((crop.rollCorrectionDeg * Math.PI) / 180);
+  ctx.rotate(rad);
   ctx.translate(-eyePivot.x, -eyePivot.y);
 
   ctx.drawImage(source, 0, 0);

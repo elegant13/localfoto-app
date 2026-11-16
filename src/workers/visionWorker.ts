@@ -256,7 +256,7 @@ function extractMeshFromMediaPipe(
   const faceHeightEst = Math.max(10, chinTip.y - skullForehead.y);
   let segmentationCrownY = Math.max(
     0,
-    skullForehead.y - faceHeightEst * 0.20
+    skullForehead.y - faceHeightEst * 0.30
   );
   let backgroundDeltaL = 6.0;
   let perimeterShadowDeltaL = 10.0;
@@ -270,7 +270,7 @@ function extractMeshFromMediaPipe(
     // Define the local portrait crop region around the head so room clutter at camera edges is ignored
     const roiLeft = Math.max(0, Math.floor(eyeMidX - ipd * 2.2));
     const roiRight = Math.min(width - 1, Math.ceil(eyeMidX + ipd * 2.2));
-    const roiTop = Math.max(0, Math.floor(skullForehead.y - faceHeightEst * 0.55));
+    const roiTop = Math.max(0, Math.floor(skullForehead.y - faceHeightEst * 0.65));
     const roiBottom = Math.min(height - 1, Math.ceil(chinTip.y));
 
     if (selfieSegmenter) {
@@ -291,15 +291,15 @@ function extractMeshFromMediaPipe(
           for (let y = roiTop; y <= Math.floor(skullForehead.y); y++) {
             const rowOffset = y * width;
             for (let x = crownSearchLeft; x <= crownSearchRight; x++) {
-              if (maskFloat[rowOffset + x] >= 0.5) {
+              if (maskFloat[rowOffset + x] >= 0.45) {
                 foundCrown = y;
                 break;
               }
             }
             if (foundCrown !== null) break;
           }
-          if (foundCrown !== null && foundCrown > roiTop + 2) {
-            segmentationCrownY = foundCrown;
+          if (foundCrown !== null) {
+            segmentationCrownY = Math.min(segmentationCrownY, foundCrown);
           }
 
           // Sample background lightness in upper left/right corners of the portrait ROI

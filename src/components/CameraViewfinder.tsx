@@ -84,11 +84,11 @@ function computeObjectCoverViewport(
 
 function createFallbackMeshForBounds(w: number, h: number): BiometricMesh {
   return {
-    chinTip: { x: w * 0.5, y: h * 0.64 },
-    skullForehead: { x: w * 0.5, y: h * 0.28 },
-    segmentationCrownY: h * 0.22,
-    leftEyePupil: { x: w * 0.42, y: h * 0.41 },
-    rightEyePupil: { x: w * 0.58, y: h * 0.41 },
+    chinTip: { x: w * 0.5, y: h * 0.65 },
+    skullForehead: { x: w * 0.5, y: h * 0.18 },
+    segmentationCrownY: h * 0.05,
+    leftEyePupil: { x: w * 0.42, y: h * 0.375 },
+    rightEyePupil: { x: w * 0.58, y: h * 0.375 },
     mouthUpper: { x: w * 0.5, y: h * 0.54 },
     mouthLower: { x: w * 0.5, y: h * 0.544 },
     leftEyeEAR: 0.28,
@@ -698,19 +698,90 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
       if (ctx) {
         ctx.drawImage(bitmap, 0, 0);
       }
-      bitmap.close();
 
-      const fallbackMesh = createFallbackMeshForBounds(w, h);
+      // Run uploaded bitmap through MediaPipe Vision Worker if available
+      let detectedMesh: BiometricMesh | null = null;
+      if (workerRef.current) {
+        const uploadFrameId = frameIdRef.current + 500;
+        frameIdRef.current = uploadFrameId;
+        detectedMesh = await new Promise<BiometricMesh | null>((resolve) => {
+          const worker = workerRef.current;
+          if (!worker) {
+            resolve(null);
+            return;
+          }
+          const timeoutId = window.setTimeout(() => {
+            worker.removeEventListener('message', onMsg);
+            resolve(null);
+          }, 2200);
+          const onMsg = (ev: MessageEvent<VisionWorkerResultMessage>) => {
+            if (
+              ev.data?.type === 'FRAME_RESULT' &&
+              ev.data.frameId === uploadFrameId
+            ) {
+              window.clearTimeout(timeoutId);
+              worker.removeEventListener('message', onMsg);
+              resolve(ev.data.mesh);
+            }
+          };
+          worker.addEventListener('message', onMsg);
+          const req: VisionWorkerRequest = {
+            type: 'PROCESS_FRAME',
+            frameId: uploadFrameId,
+            profile: activeProfile,
+            bitmap,
+            imageBounds: { width: w, height: h },
+          };
+          worker.postMessage(req, [bitmap]);
+        });
+      } else {
+        bitmap.close();
+      }
+
+      const meshToUse = detectedMesh ?? createFallbackMeshForBounds(w, h);
       const { report, crop } = evaluateBiometricValidation(
-        fallbackMesh,
+        meshToUse,
         activeProfile,
         { width: w, height: h }
       );
+
+      // If the uploaded image already matches the profile aspect ratio (e.g., an already-cropped 1:1 digital passport photo)
+      // and its existing head & eye positions already satisfy the profile specs, preserve the full image without double-cropping
+      const isAlreadyProfileAspect =
+        Math.abs(w / h - activeProfile.aspectRatio) <= 0.02;
+      const existingCrownY = Math.min(
+        meshToUse.segmentationCrownY,
+        meshToUse.skullForehead.y
+      );
+      const existingHeadRatio = (meshToUse.chinTip.y - existingCrownY) / h;
+      const existingEyeY =
+        (meshToUse.leftEyePupil.y + meshToUse.rightEyePupil.y) / 2;
+      const existingEyeFromBottom = (h - existingEyeY) / h;
+      const eyeMin = activeProfile.eyeConstraints?.minFromBottom ?? 0.50;
+      const eyeMax = activeProfile.eyeConstraints?.maxFromBottom ?? 0.70;
+
+      const isAlreadyBiometricallyFramed =
+        isAlreadyProfileAspect &&
+        existingHeadRatio >= activeProfile.headConstraints.minRatio - 0.02 &&
+        existingHeadRatio <= activeProfile.headConstraints.maxRatio + 0.02 &&
+        existingEyeFromBottom >= eyeMin - 0.02 &&
+        existingEyeFromBottom <= eyeMax + 0.02;
+
+      const finalCrop: CropParameters = isAlreadyBiometricallyFramed
+        ? {
+            xMin: 0,
+            yMin: 0,
+            cropWidth: w,
+            cropHeight: h,
+            rollCorrectionDeg: 0,
+          }
+        : crop;
+
       onCaptureReady({
         sourceCanvas: exportCanvas,
-        mesh: fallbackMesh,
+        mesh: meshToUse,
         report,
-        crop,
+        crop: finalCrop,
       });
     } catch {
       setCameraError('Could not decode uploaded image file.');
