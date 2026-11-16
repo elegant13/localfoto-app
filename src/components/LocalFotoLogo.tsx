@@ -15,7 +15,7 @@ interface LocalFotoLogoProps {
  * Clean, geometric Material Design 3 vector logo mark for LocalFoto.
  */
 export const LocalFotoLogo: React.FC<LocalFotoLogoProps> = ({
-  variant = 'biometric_viewfinder',
+  variant = 'privacy_shutter',
   className = 'w-10 h-10',
 }) => {
   if (variant === 'print_grid_lens') {
@@ -92,14 +92,29 @@ export const LocalFotoLogo: React.FC<LocalFotoLogoProps> = ({
         aria-hidden="true"
       >
         <rect width="64" height="64" rx="18" fill="#137333" />
+        {/* Privacy Shield */}
         <path
-          d="M32 13L47 19V31C47 41.5 39.8 49.4 32 52C24.2 49.4 17 41.5 17 31V19L32 13Z"
+          d="M32 11L49 17.5V30.5C49 41.8 41.2 50.2 32 53C22.8 50.2 15 41.8 15 30.5V17.5L32 11Z"
           stroke="#FFFFFF"
-          strokeWidth="3.2"
+          strokeWidth="3"
           strokeLinejoin="round"
         />
-        <circle cx="32" cy="32" r="7" stroke="#C4EED0" strokeWidth="3" />
-        <circle cx="32" cy="32" r="2.5" fill="#FFFFFF" />
+        {/* Passport Photo Frame */}
+        <rect
+          x="23"
+          y="21"
+          width="18"
+          height="22"
+          rx="3"
+          stroke="#C4EED0"
+          strokeWidth="2.4"
+        />
+        {/* Person Silhouette */}
+        <circle cx="32" cy="28" r="3.6" fill="#FFFFFF" />
+        <path
+          d="M25.5 41.8C25.5 36.9 28.4 34.5 32 34.5C35.6 34.5 38.5 36.9 38.5 41.8H25.5Z"
+          fill="#FFFFFF"
+        />
       </svg>
     );
   }
