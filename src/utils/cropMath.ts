@@ -272,11 +272,10 @@ export function solveConstrainedCrop(
   const hMaxFromHead = headHeightPx / minRatio;
   const hTarget = headHeightPx / targetRatio;
 
-  // Also ensure the crop height can satisfy both chin clearance and crown top clearance (> 2% margin above crown)
-  // y_max - y_chin >= chinClearanceMin * H  AND  y_crown >= y_min + 0.02 * H
-  // Since y_max - y_min = H and y_chin - y_crown = headHeightPx:
-  // H >= headHeightPx / (1 - chinClearanceMin - 0.02)
-  const hMinFromClearance = headHeightPx / Math.max(0.2, 0.98 - chinClearanceMin);
+  // Ensure enough top headroom (>= 6% for portrait formats, >= 3% for 1:1) and chin-to-bottom shoulder clearance
+  const minTopHeadroom = profile.aspectRatio < 0.9 ? 0.06 : 0.03;
+  const hMinFromClearance =
+    headHeightPx / Math.max(0.2, 1 - minTopHeadroom - chinClearanceMin);
 
   const feasibleHMin = Math.max(hMinFromHead, hMinFromClearance);
   const feasibleHMax = Math.max(feasibleHMin, hMaxFromHead);
@@ -299,9 +298,8 @@ export function solveConstrainedCrop(
     // 2) Chin bottom clearance constraint: yMax >= yChin + chinClearanceMin * H
     const yMaxChinLow = yChin + chinClearanceMin * candidateH;
 
-    // 3) Top crown clearance constraint (keep crown inside frame with >= 2% headroom):
-    //    yMin <= yCrown - 0.02 * H  =>  yMax - H <= yCrown - 0.02 * H  =>  yMax <= yCrown + 0.98 * H
-    const yMaxCrownHigh = yCrown + 0.98 * candidateH;
+    // 3) Top crown clearance constraint (keep crown inside frame with >= minTopHeadroom):
+    const yMaxCrownHigh = yCrown + (1 - minTopHeadroom) * candidateH;
 
     const lowerBoundYMax = Math.max(yMaxEyeLow, yMaxChinLow);
     const upperBoundYMax = Math.min(yMaxEyeHigh, yMaxCrownHigh);
