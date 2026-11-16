@@ -158,15 +158,15 @@ export const UK_PASSPORT_PROFILE: PhotoProfile = {
   },
   aspectRatio: 35.0 / 45.0,
   headConstraints: {
-    minRatio: 26.0 / 45.0, // Allows 29-34mm skull crown-to-chin while keeping full headroom & upper shoulders
-    maxRatio: 33.0 / 45.0,
-    targetRatio: 28.5 / 45.0,
+    minRatio: 0.48,
+    maxRatio: 0.65,
+    targetRatio: 0.56, // Matches GOV.UK approved examples (~12% headroom + ~32% upper shoulders)
   },
   eyeConstraints: {
-    minFromBottom: 0.52,
-    maxFromBottom: 0.65,
+    minFromBottom: 0.54,
+    maxFromBottom: 0.66,
   },
-  chinBottomClearanceMin: 0.22,
+  chinBottomClearanceMin: 0.28,
   allowedBackgrounds: ['pure_white', 'off_white', 'light_gray'],
   glassesAllowed: false,
   teethAllowed: false,
