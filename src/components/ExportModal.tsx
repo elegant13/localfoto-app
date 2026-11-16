@@ -8,7 +8,7 @@ import {
   Share2,
   ExternalLink,
   CheckCircle2,
-  ArrowLeft,
+  RotateCcw,
 } from 'lucide-react';
 import { PhotoProfile } from '../types/profile';
 import { CapturePayload } from './CameraViewfinder';
@@ -211,21 +211,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       aria-labelledby="export-modal-title"
     >
       {/* Compact Header */}
-      <div className="flex items-center justify-between px-1">
+      <div className="px-1">
         <h2
           id="export-modal-title"
           className="text-xl font-extrabold text-[#1F1F1F] tracking-tight"
         >
           Review &amp; Print 4×6&quot;
         </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="h-9 px-3.5 rounded-full bg-[#EDF2FA] text-[#041E49] text-xs font-semibold flex items-center gap-1 cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Retake
-        </button>
       </div>
 
       {/* Card 1: 4x6 Outcome Preview & Save */}
@@ -279,29 +271,41 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
-          {sheetUrl && (
-            <a
-              href={sheetUrl}
-              download={`${profile.id}_4x6_300dpi_print_sheet.jpg`}
-              className="h-10 px-3 rounded-full bg-[#EDF2FA] hover:bg-[#D3E3FD] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
-              data-testid="download-print-sheet-btn"
-            >
-              <Download className="w-3.5 h-3.5 text-[#0B57D0]" />
-              <span>Save 4×6&quot;</span>
-            </a>
-          )}
-          {digitalUrl && (
-            <a
-              href={digitalUrl}
-              download={`${profile.id}_${digitalDims.w}x${digitalDims.h}_digital.jpg`}
-              className="h-10 px-3 rounded-full bg-[#EDF2FA] hover:bg-[#D3E3FD] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
-              data-testid="download-digital-photo-btn"
-            >
-              <Download className="w-3.5 h-3.5 text-[#0B57D0]" />
-              <span>Save Digital</span>
-            </a>
-          )}
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-11 px-4 rounded-full bg-[#D3E3FD] hover:bg-[#C2D7FC] border border-[#0B57D0]/30 text-[#041E49] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition active:scale-98"
+            data-testid="retake-photo-btn"
+          >
+            <RotateCcw className="w-4 h-4 text-[#0B57D0]" />
+            <span>Retake Photo</span>
+          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            {sheetUrl && (
+              <a
+                href={sheetUrl}
+                download={`${profile.id}_4x6_300dpi_print_sheet.jpg`}
+                className="h-10 px-3 rounded-full bg-[#EDF2FA] hover:bg-[#D3E3FD] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                data-testid="download-print-sheet-btn"
+              >
+                <Download className="w-3.5 h-3.5 text-[#0B57D0]" />
+                <span>Save 4×6&quot;</span>
+              </a>
+            )}
+            {digitalUrl && (
+              <a
+                href={digitalUrl}
+                download={`${profile.id}_${digitalDims.w}x${digitalDims.h}_digital.jpg`}
+                className="h-10 px-3 rounded-full bg-[#EDF2FA] hover:bg-[#D3E3FD] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                data-testid="download-digital-photo-btn"
+              >
+                <Download className="w-3.5 h-3.5 text-[#0B57D0]" />
+                <span>Save Digital</span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
