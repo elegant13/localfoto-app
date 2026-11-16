@@ -158,6 +158,10 @@ export const UK_PASSPORT_PROFILE: PhotoProfile = {
     maxRatio: 34.0 / 45.0,
     targetRatio: 31.5 / 45.0,
   },
+  eyeConstraints: {
+    minFromBottom: 0.48,
+    maxFromBottom: 0.68,
+  },
   chinBottomClearanceMin: 0.14,
   allowedBackgrounds: ['pure_white', 'off_white', 'light_gray'],
   glassesAllowed: false,

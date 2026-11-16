@@ -913,15 +913,16 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
   const targetHeadRatio = activeProfile.headConstraints.targetRatio;
   const minHeadRatio = activeProfile.headConstraints.minRatio;
   const maxHeadRatio = activeProfile.headConstraints.maxRatio;
-  const eyeMinFromBottom = activeProfile.eyeConstraints?.minFromBottom ?? 0.56;
-  const eyeMaxFromBottom = activeProfile.eyeConstraints?.maxFromBottom ?? 0.69;
+  const eyeMinFromBottom = activeProfile.eyeConstraints?.minFromBottom ?? 0.50;
+  const eyeMaxFromBottom = activeProfile.eyeConstraints?.maxFromBottom ?? 0.70;
 
   const eyeTopY = (1 - eyeMaxFromBottom) * 100;
   const eyeBottomY = (1 - eyeMinFromBottom) * 100;
   const eyeCenterY = (eyeTopY + eyeBottomY) / 2;
 
   const targetOvalRy = (targetHeadRatio * 100) / 2;
-  const targetOvalRx = targetOvalRy * 0.72;
+  // Scale rx by 1/aspectRatio so the head oval keeps natural 0.72 proportions on non-square profiles (e.g., UK 35x45mm)
+  const targetOvalRx = (targetOvalRy * 0.72) / activeProfile.aspectRatio;
   const minOvalRy = (minHeadRatio * 100) / 2;
   const maxOvalRy = (maxHeadRatio * 100) / 2;
   const ovalCenterY = eyeCenterY + targetOvalRy * 0.12;

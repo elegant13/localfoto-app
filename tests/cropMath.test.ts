@@ -16,6 +16,7 @@ import {
   SCHENGEN_VISA_PROFILE,
   INDIA_OCI_PROFILE,
   CANADA_PASSPORT_PROFILE,
+  UK_PASSPORT_PROFILE,
 } from '../src/profiles/registry';
 import { MOCK_PORTRAIT_FIXTURES } from '../src/services/mockCameraService';
 import mockLandmarksJson from './fixtures/mockLandmarks.json';
@@ -146,12 +147,13 @@ describe('Phase 1 & 2: Parameterized Profile Registry & Biometric Crop Solver', 
     expect(report.overallPass).toBe(false);
   });
 
-  it('solves multi-variable crop across Schengen, India OCI, and Canada profiles without code changes', () => {
+  it('solves multi-variable crop across Schengen, India OCI, Canada, and UK profiles without code changes', () => {
     const fixture = MOCK_PORTRAIT_FIXTURES.compliant_subject;
     for (const profile of [
       SCHENGEN_VISA_PROFILE,
       INDIA_OCI_PROFILE,
       CANADA_PASSPORT_PROFILE,
+      UK_PASSPORT_PROFILE,
     ]) {
       const solved = solveConstrainedCrop(
         fixture.mesh,
