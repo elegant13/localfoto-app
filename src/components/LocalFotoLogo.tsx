@@ -91,7 +91,7 @@ export const LocalFotoLogo: React.FC<LocalFotoLogoProps> = ({
         className={className}
         aria-hidden="true"
       >
-        <rect width="64" height="64" rx="18" fill="#137333" />
+        <rect width="64" height="64" rx="18" fill="#0F5C29" />
         {/* Privacy Shield */}
         <path
           d="M32 11L49 17.5V30.5C49 41.8 41.2 50.2 32 53C22.8 50.2 15 41.8 15 30.5V17.5L32 11Z"

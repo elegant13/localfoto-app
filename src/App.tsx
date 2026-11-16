@@ -31,6 +31,10 @@ export const App: React.FC = () => {
     } else {
       root.classList.remove('dark');
     }
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', theme === 'dark' ? '#0F1117' : '#F8FAFD');
+    }
     try {
       window.localStorage.setItem('localfoto_theme', theme);
     } catch {

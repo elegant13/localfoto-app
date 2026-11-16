@@ -24,7 +24,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onGetStarted }) => {
       desc: 'Your pictures never leave your phone—all processing happens locally inside LocalFoto.',
     },
     {
-      icon: <Sun className="w-5 h-5 text-[#B06000]" />,
+      icon: <Sun className="w-5 h-5 text-[#8C4A00]" />,
       bg: 'bg-[#FEF7E0]',
       title: 'Stand ~2 ft from a White Wall',
       desc: 'Face a window or lamp so even light falls on the front of your face.',
