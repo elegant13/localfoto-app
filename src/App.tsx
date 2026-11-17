@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Globe, Lock, Sun, Moon, MessageSquare, X } from 'lucide-react';
+import { Globe, Lock, Sun, Moon, MessageSquare } from 'lucide-react';
 import { profileRegistry } from './profiles/registry';
 import { PhotoProfile } from './types/profile';
 import { CameraViewfinder, CapturePayload } from './components/CameraViewfinder';
@@ -112,7 +112,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFD] text-[#1F1F1F] flex flex-col transition-colors duration-200">
+    <div className="min-h-[100dvh] bg-[#F8FAFD] text-[#1F1F1F] flex flex-col transition-colors duration-200">
       {/* Material Design 3 Top App Bar */}
       <header className="sticky top-0 z-30 bg-[#F8FAFD]/95 backdrop-blur-md border-b border-[#E1E3E1] transition-colors duration-200">
         <div className="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
@@ -207,36 +207,7 @@ export const App: React.FC = () => {
       </header>
 
       {/* Main Mobile-First Content Area */}
-      <main className="flex-1 w-full max-w-md mx-auto px-4 py-3 space-y-3">
-        {/* Option 3: Smart Non-Blocking Retake Reason Chip Bar */}
-        {showRetakeReasonBar && !capturePayload && !isAdminRoute && (
-          <div className="bg-[#EDF2FA] border border-[#C4C7C5]/70 rounded-2xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-semibold text-[#041E49]">
-              Retaking? What went wrong?
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {['Too zoomed in', 'Lighting', 'Hard to align'].map((reason) => (
-                <button
-                  key={reason}
-                  type="button"
-                  onClick={() => handleRetakeReason(reason)}
-                  className="px-2.5 py-1 rounded-full bg-white text-[#0B57D0] font-semibold border border-[#D3E3FD] cursor-pointer text-[11px]"
-                >
-                  {reason}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setShowRetakeReasonBar(false)}
-                aria-label="Dismiss retake tip"
-                className="p-1 text-[#444746] cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
+      <main className="flex-1 w-full max-w-md mx-auto px-4 py-3 flex flex-col">
         {isAdminRoute ? (
           <AdminDashboard
             onBack={() => {
@@ -259,6 +230,9 @@ export const App: React.FC = () => {
               setShowRetakeReasonBar(false);
               setCapturePayload(payload);
             }}
+            showRetakeReasonBar={showRetakeReasonBar}
+            onRetakeReason={handleRetakeReason}
+            onDismissRetakeBar={() => setShowRetakeReasonBar(false)}
           />
         ) : (
           <ExportModal

@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Smartphone,
   Ruler,
+  X,
 } from 'lucide-react';
 import { PhotoProfile } from '../types/profile';
 import {
@@ -44,6 +45,9 @@ export interface CapturePayload {
 interface CameraViewfinderProps {
   activeProfile: PhotoProfile;
   onCaptureReady: (payload: CapturePayload) => void;
+  showRetakeReasonBar?: boolean;
+  onRetakeReason?: (reason: string) => void;
+  onDismissRetakeBar?: () => void;
 }
 
 type HudStatusColor = 'red' | 'amber' | 'green';
@@ -104,6 +108,9 @@ function createFallbackMeshForBounds(w: number, h: number): BiometricMesh {
 export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
   activeProfile,
   onCaptureReady,
+  showRetakeReasonBar = false,
+  onRetakeReason,
+  onDismissRetakeBar,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const simCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -941,81 +948,109 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto flex-1 flex flex-col">
       {/* Hidden simulation canvas for automated tests & simulator fallback */}
       <canvas ref={simCanvasRef} className="hidden" />
 
-      {/* STEP 1: MINIMALIST ENVIRONMENT & LIGHTING CHECK */}
+      {/* STEP 1: ZERO-SCROLL ENVIRONMENT & LIGHTING CHECK */}
       {wizardStage === 'lighting_guide' && (
-        <div className="flex flex-col justify-between min-h-[calc(100dvh-5.5rem)] py-2">
-          <div className="space-y-4">
-            <div className="px-1 space-y-1">
-              <span className="text-xs font-bold text-[#0B57D0] uppercase tracking-wider">
+        <div className="flex-1 flex flex-col justify-between gap-3">
+          <div className="space-y-2.5">
+            <div className="px-0.5">
+              <span className="text-[11px] font-bold text-[#0B57D0] uppercase tracking-wider">
                 Step 1 of 2 • Quick Setup
               </span>
-              <h2 className="text-2xl font-extrabold text-[#1F1F1F] tracking-tight">
+              <h2 className="text-xl font-extrabold text-[#1F1F1F] tracking-tight">
                 Environment &amp; Lighting
               </h2>
             </div>
 
-            <div className="bg-white rounded-[28px] p-5 m3-elevation-1 border border-[#E1E3E1] space-y-4">
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#D3E3FD] text-[#0B57D0] flex items-center justify-center shrink-0">
-                  <Ruler className="w-5 h-5" />
+            <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#D3E3FD] text-[#0B57D0] flex items-center justify-center shrink-0">
+                  <Ruler className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#1F1F1F]">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#1F1F1F]">
                     Stand ~2 ft from a white wall
                   </h3>
-                  <p className="text-xs text-[#444746] mt-0.5">
+                  <p className="text-[11px] sm:text-xs text-[#444746] leading-snug">
                     Use a plain white or off-white background to avoid shadows.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#FEF7E0] text-[#8C4A00] flex items-center justify-center shrink-0">
-                  <Sun className="w-5 h-5" />
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#FEF7E0] text-[#8C4A00] flex items-center justify-center shrink-0">
+                  <Sun className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#1F1F1F]">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#1F1F1F]">
                     Light from the front
                   </h3>
-                  <p className="text-xs text-[#444746] mt-0.5">
+                  <p className="text-[11px] sm:text-xs text-[#444746] leading-snug">
                     Face a window or lamp directly so light falls evenly on you.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#E6F4EA] text-[#137333] flex items-center justify-center shrink-0">
-                  <UserCheck className="w-5 h-5" />
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#E6F4EA] text-[#137333] flex items-center justify-center shrink-0">
+                  <UserCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#1F1F1F]">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#1F1F1F]">
                     Look at the camera lens, not the screen
                   </h3>
-                  <p className="text-xs text-[#444746] mt-0.5">
-                    Remove glasses, keep mouth closed, and look directly into
-                    the physical camera lens (follow our gentle audio cues).
+                  <p className="text-[11px] sm:text-xs text-[#444746] leading-snug">
+                    Remove glasses, keep mouth closed, and follow audio cues.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 space-y-2.5">
+          <div className="space-y-2 shrink-0">
+            {/* Retake Reason Feedback Pill positioned right above Next CTA */}
+            {showRetakeReasonBar && (
+              <div className="bg-[#EDF2FA] border border-[#C4C7C5]/70 rounded-2xl px-3 py-2 flex flex-wrap items-center justify-between gap-1.5 text-xs">
+                <span className="font-semibold text-[#041E49] text-[11px]">
+                  Retaking? Why:
+                </span>
+                <div className="flex flex-wrap items-center gap-1">
+                  {['Too zoomed in', 'Lighting', 'Alignment'].map((reason) => (
+                    <button
+                      key={reason}
+                      type="button"
+                      onClick={() => onRetakeReason?.(reason)}
+                      className="px-2 py-0.5 rounded-full bg-white text-[#0B57D0] font-semibold border border-[#D3E3FD] cursor-pointer text-[11px]"
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={onDismissRetakeBar}
+                    aria-label="Dismiss retake tip"
+                    className="p-0.5 text-[#444746] cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => setWizardStage('camera_choice')}
-              className="w-full h-14 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] active:bg-[#062E6F] text-white font-bold text-base shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full h-12 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] active:bg-[#062E6F] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Next</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-4 h-4" />
             </button>
 
-            <label className="w-full h-11 rounded-full bg-[#EDF2FA] hover:bg-[#E4EBF5] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition">
-              <Upload className="w-4 h-4 text-[#0B57D0]" />
+            <label className="w-full h-10 rounded-full bg-[#EDF2FA] hover:bg-[#E4EBF5] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition">
+              <Upload className="w-3.5 h-3.5 text-[#0B57D0]" />
               <span>Or upload an existing photo</span>
               <input
                 type="file"
@@ -1030,7 +1065,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
       {/* STEP 2A: MINIMALIST CAMERA LENS SELECTION */}
       {wizardStage === 'camera_choice' && (
-        <div className="flex flex-col justify-between min-h-[calc(100dvh-5.5rem)] py-2">
+        <div className="flex-1 flex flex-col justify-between gap-3">
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <div>
