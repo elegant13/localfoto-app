@@ -9,14 +9,12 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  }
-  // After creating your D1 database in Cloudflare (Workers & Pages -> D1),
-  // bind it in Settings -> Bindings as variable name "DB", or uncomment below:
-  // ,"d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "localfoto-db",
-  //     "database_id": "YOUR_D1_DATABASE_ID"
-  //   }
-  // ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "localfoto-db",
+      "database_id": "faa39ee4-7b1a-4b44-a48b-03d2c06313ef"
+    }
+  ]
 }
