@@ -237,8 +237,8 @@ export const CHINA_VISA_PROFILE: PhotoProfile = {
     targetRatio: 30.5 / 48.0,
   },
   eyeConstraints: {
-    minFromBottom: 0.52,
-    maxFromBottom: 0.68,
+    minFromBottom: 0.56,
+    maxFromBottom: 0.70, // Places crown 3-5mm from top edge per China Consulate spec
   },
   chinBottomClearanceMin: 7.0 / 48.0, // >= 7mm below chin
   allowedBackgrounds: ['pure_white', 'off_white'],
