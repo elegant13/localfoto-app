@@ -10,6 +10,8 @@ import {
 import {
   US_PASSPORT_PROFILE,
   SCHENGEN_VISA_PROFILE,
+  CHINA_VISA_PROFILE,
+  MEXICO_PASSPORT_PROFILE,
 } from '../src/profiles/registry';
 import { MOCK_PORTRAIT_FIXTURES } from '../src/services/mockCameraService';
 import {
@@ -215,5 +217,53 @@ describe('Phase 5 & 6: 4x6 Print Sheet Compositor, 300 DPI JFIF Metadata & Resou
     expect(evalResult.payloadMetadata.dpi).toBe(300);
     expect(evalResult.payloadMetadata.printSizeInches).toContain('4 × 6');
     expect(evalResult.technicalSteps.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('produces exact 33x48mm (3-up) print tiles and 385x560px COVA digital output for China, and 35x45mm (3-up) + 1200x1543px for Mexico', async () => {
+    const fixture = MOCK_PORTRAIT_FIXTURES.compliant_subject;
+    const eyePivot = getInterPupillaryMidpoint(fixture.mesh);
+    const sourceCanvas = document.createElement('canvas');
+    sourceCanvas.width = fixture.imageBounds.width;
+    sourceCanvas.height = fixture.imageBounds.height;
+
+    // China Visa (33x48 mm)
+    const chinaLayout = computeSheetLayout(CHINA_VISA_PROFILE);
+    expect(chinaLayout.tileWidthPx).toBe(Math.round((33 / 25.4) * 300)); // 390 px
+    expect(chinaLayout.tileHeightPx).toBe(Math.round((48 / 25.4) * 300)); // 567 px
+    expect(chinaLayout.tiles.length).toBe(3);
+
+    const { crop: chinaCrop } = evaluateBiometricValidation(
+      fixture.mesh,
+      CHINA_VISA_PROFILE,
+      fixture.imageBounds
+    );
+    const chinaDigital = await generateDigitalPassportPhoto(
+      sourceCanvas,
+      chinaCrop,
+      eyePivot,
+      CHINA_VISA_PROFILE
+    );
+    expect(chinaDigital.widthPx).toBe(385);
+    expect(chinaDigital.heightPx).toBe(560);
+
+    // Mexico Passport & Visa (35x45 mm)
+    const mexicoLayout = computeSheetLayout(MEXICO_PASSPORT_PROFILE);
+    expect(mexicoLayout.tileWidthPx).toBe(Math.round((35 / 25.4) * 300)); // 413 px
+    expect(mexicoLayout.tileHeightPx).toBe(Math.round((45 / 25.4) * 300)); // 531 px
+    expect(mexicoLayout.tiles.length).toBe(3);
+
+    const { crop: mexicoCrop } = evaluateBiometricValidation(
+      fixture.mesh,
+      MEXICO_PASSPORT_PROFILE,
+      fixture.imageBounds
+    );
+    const mexicoDigital = await generateDigitalPassportPhoto(
+      sourceCanvas,
+      mexicoCrop,
+      eyePivot,
+      MEXICO_PASSPORT_PROFILE
+    );
+    expect(mexicoDigital.widthPx).toBe(1200);
+    expect(mexicoDigital.heightPx).toBe(1543);
   });
 });

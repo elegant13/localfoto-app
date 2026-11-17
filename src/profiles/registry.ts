@@ -246,8 +246,8 @@ export const CHINA_VISA_PROFILE: PhotoProfile = {
   teethAllowed: false,
   digitalSubmissionSpec: {
     minWidthPx: 354,
-    maxWidthPx: 1200,
-    maxFileSizeBytes: 5 * 1024 * 1024,
+    maxWidthPx: 385, // 385x560 px satisfies COVA 354-420px wide x 472-560px tall
+    maxFileSizeBytes: 120 * 1024, // 120 KB max for COVA online portal
     colorSpace: 'sRGB',
   },
   printSheetSpec: {
