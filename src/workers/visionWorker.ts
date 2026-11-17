@@ -253,7 +253,9 @@ function extractMeshFromMediaPipe(
     pitchDeg = (actualNoseRatio - 0.62) * 45;
   }
 
-  // Estimate gaze alignment using iris centers (468, 473) relative to eye corners (33/133, 362/263)
+  // Strict gaze alignment check:
+  // 1) Iris centers (468, 473) must be centered within eye corners & eyelids
+  // 2) MediaPipe eyeLook* blendshape scores must all be low (<= 0.35)
   let gazeCentered = true;
   if (lm[468] && lm[473] && lm[33] && lm[133] && lm[362] && lm[263]) {
     const leftEyeW = Math.max(1e-5, Math.abs(lm[133].x - lm[33].x));
@@ -272,9 +274,35 @@ function extractMeshFromMediaPipe(
     const rightIrisRatioY = (lm[473].y - lm[386].y) / rightEyeH;
     const avgIrisY = (leftIrisRatioY + rightIrisRatioY) / 2;
 
-    // Looking off to the side (< 0.36 or > 0.64) or looking down at screen (> 0.68) fails gaze lock
-    if (avgIrisX < 0.36 || avgIrisX > 0.64 || avgIrisY < 0.25 || avgIrisY > 0.68) {
+    if (
+      avgIrisX < 0.43 ||
+      avgIrisX > 0.57 ||
+      Math.abs(leftIrisRatioX - 0.5) > 0.085 ||
+      Math.abs(rightIrisRatioX - 0.5) > 0.085 ||
+      avgIrisY < 0.34 ||
+      avgIrisY > 0.60
+    ) {
       gazeCentered = false;
+    }
+  }
+
+  const blendshapes = result.faceBlendshapes?.[0]?.categories;
+  if (blendshapes && blendshapes.length > 0) {
+    const gazeCats = new Set([
+      'eyeLookInLeft',
+      'eyeLookOutLeft',
+      'eyeLookUpLeft',
+      'eyeLookDownLeft',
+      'eyeLookInRight',
+      'eyeLookOutRight',
+      'eyeLookUpRight',
+      'eyeLookDownRight',
+    ]);
+    for (const cat of blendshapes) {
+      if (gazeCats.has(cat.categoryName) && cat.score > 0.35) {
+        gazeCentered = false;
+        break;
+      }
     }
   }
 
