@@ -6,6 +6,12 @@ import { CameraViewfinder, CapturePayload } from './components/CameraViewfinder'
 import { ExportModal } from './components/ExportModal';
 import { HomePage } from './components/HomePage';
 import { LocalFotoLogo } from './components/LocalFotoLogo';
+import { AdminDashboard } from './components/AdminDashboard';
+import {
+  fetchPublicStats,
+  PublicStats,
+  trackEvent,
+} from './services/analyticsService';
 
 export const App: React.FC = () => {
   const profiles = profileRegistry.getAll();
@@ -16,6 +22,13 @@ export const App: React.FC = () => {
   const [capturePayload, setCapturePayload] = useState<CapturePayload | null>(
     null
   );
+  const [isAdminRoute, setIsAdminRoute] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash === '#admin';
+    }
+    return false;
+  });
+  const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('localfoto_theme');
@@ -23,6 +36,30 @@ export const App: React.FC = () => {
     }
     return 'light';
   });
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setIsAdminRoute(window.location.hash === '#admin');
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  useEffect(() => {
+    // Track 1 visit per browser session without storing any PII
+    try {
+      const alreadyTracked = window.sessionStorage.getItem('localfoto_visited');
+      if (!alreadyTracked) {
+        window.sessionStorage.setItem('localfoto_visited', '1');
+        trackEvent('visit', activeProfile.id);
+      }
+    } catch {
+      trackEvent('visit', activeProfile.id);
+    }
+    fetchPublicStats().then((stats) => {
+      if (stats) setPublicStats(stats);
+    });
+  }, [activeProfile.id]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -54,6 +91,10 @@ export const App: React.FC = () => {
           <button
             type="button"
             onClick={() => {
+              if (window.location.hash === '#admin') {
+                window.location.hash = '';
+              }
+              setIsAdminRoute(false);
               setCapturePayload(null);
               setHasStarted(false);
             }}
@@ -123,12 +164,20 @@ export const App: React.FC = () => {
 
       {/* Main Mobile-First Content Area */}
       <main className="flex-1 w-full max-w-md mx-auto px-4 py-3">
-        {!hasStarted ? (
+        {isAdminRoute ? (
+          <AdminDashboard
+            onBack={() => {
+              window.location.hash = '';
+              setIsAdminRoute(false);
+            }}
+          />
+        ) : !hasStarted ? (
           <HomePage
             profiles={profiles}
             activeProfile={activeProfile}
             onSelectProfile={(p) => setActiveProfile(p)}
             onGetStarted={() => setHasStarted(true)}
+            publicStats={publicStats}
           />
         ) : !capturePayload ? (
           <CameraViewfinder

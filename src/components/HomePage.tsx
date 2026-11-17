@@ -5,17 +5,23 @@ import {
   Camera,
   MapPin,
   ArrowRight,
+  Users,
 } from 'lucide-react';
 import { PhotoProfile } from '../types/profile';
+import { PublicStats } from '../services/analyticsService';
 
 interface HomePageProps {
   profiles: PhotoProfile[];
   activeProfile: PhotoProfile;
   onSelectProfile: (profile: PhotoProfile) => void;
   onGetStarted: () => void;
+  publicStats?: PublicStats | null;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onGetStarted }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  onGetStarted,
+  publicStats,
+}) => {
   const steps = [
     {
       icon: <Lock className="w-5 h-5 text-[#137333]" />,
@@ -47,10 +53,21 @@ export const HomePage: React.FC<HomePageProps> = ({ onGetStarted }) => {
     <div className="w-full max-w-md mx-auto flex flex-col justify-between min-h-[calc(100dvh-5.5rem)] py-2">
       <div className="space-y-4">
         {/* Minimalist Header */}
-        <div className="px-1 space-y-1">
-          <h2 className="text-2xl font-extrabold text-[#1F1F1F] tracking-tight">
-            How LocalFoto Works
-          </h2>
+        <div className="px-1 space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-2xl font-extrabold text-[#1F1F1F] tracking-tight">
+              How LocalFoto Works
+            </h2>
+            {publicStats && publicStats.totalVisitors > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EDF2FA] text-[#041E49] text-[11px] font-semibold shrink-0"
+                data-testid="public-visitor-badge"
+              >
+                <Users className="w-3 h-3 text-[#0B57D0]" />
+                {publicStats.totalVisitors.toLocaleString()} visitors
+              </span>
+            )}
+          </div>
           <p className="text-xs text-[#444746]">
             Take biometric passport photos on your phone &amp; cut a 4×6&quot;
             print at home.

@@ -1,11 +1,22 @@
 {
   "name": "localfoto-app",
+  "main": "worker/index.ts",
   "compatibility_date": "2025-01-01",
   "build": {
     "command": "npm run build"
   },
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   }
+  // After creating your D1 database in Cloudflare (Workers & Pages -> D1),
+  // bind it in Settings -> Bindings as variable name "DB", or uncomment below:
+  // ,"d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "localfoto-db",
+  //     "database_id": "YOUR_D1_DATABASE_ID"
+  //   }
+  // ]
 }
