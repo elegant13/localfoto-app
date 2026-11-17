@@ -50,7 +50,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-between gap-3">
+    <div className="w-full max-w-md mx-auto flex flex-col justify-start gap-4 pt-1">
       <div className="space-y-2.5">
         {/* Compact Header */}
         <div className="px-0.5 space-y-0.5">

@@ -957,7 +957,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
       {/* STEP 1: ZERO-SCROLL ENVIRONMENT & LIGHTING CHECK */}
       {wizardStage === 'lighting_guide' && (
-        <div className="flex-1 flex flex-col justify-between gap-3">
+        <div className="flex flex-col justify-start gap-4 pt-1">
           <div className="space-y-2.5">
             <div className="px-0.5">
               <span className="text-[11px] font-bold text-[#0B57D0] uppercase tracking-wider">
@@ -1068,7 +1068,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
 
       {/* STEP 2A: MINIMALIST CAMERA LENS SELECTION */}
       {wizardStage === 'camera_choice' && (
-        <div className="flex-1 flex flex-col justify-between gap-3">
+        <div className="flex flex-col justify-start gap-4 pt-1">
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <div>
