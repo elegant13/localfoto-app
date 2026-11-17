@@ -185,6 +185,117 @@ export const UK_PASSPORT_PROFILE: PhotoProfile = {
   },
 };
 
+export const AUSTRALIA_PASSPORT_PROFILE: PhotoProfile = {
+  id: 'australia_passport',
+  displayName: 'Australia Passport (35×45 mm)',
+  countryCode: 'AU',
+  physicalSize: {
+    widthMm: 35.0,
+    heightMm: 45.0,
+  },
+  aspectRatio: 35.0 / 45.0,
+  headConstraints: {
+    minRatio: 32.0 / 45.0, // 32mm to 36mm on 45mm height
+    maxRatio: 36.0 / 45.0,
+    targetRatio: 34.0 / 45.0,
+  },
+  eyeConstraints: {
+    minFromBottom: 0.50,
+    maxFromBottom: 0.68,
+  },
+  chinBottomClearanceMin: 0.14,
+  allowedBackgrounds: ['pure_white', 'off_white', 'light_gray'],
+  glassesAllowed: false,
+  teethAllowed: false,
+  digitalSubmissionSpec: {
+    minWidthPx: 600,
+    maxWidthPx: 1200,
+    maxFileSizeBytes: 10 * 1024 * 1024,
+    colorSpace: 'sRGB',
+  },
+  printSheetSpec: {
+    sheetWidthInches: 6.0,
+    sheetHeightInches: 4.0,
+    dpi: 300,
+    safeMarginInches: 0.5,
+    minSeparationInches: 0.25,
+  },
+};
+
+export const CHINA_VISA_PROFILE: PhotoProfile = {
+  id: 'china_visa',
+  displayName: 'China Visa & Passport (33×48 mm)',
+  countryCode: 'CN',
+  physicalSize: {
+    widthMm: 33.0,
+    heightMm: 48.0,
+  },
+  aspectRatio: 33.0 / 48.0,
+  headConstraints: {
+    minRatio: 28.0 / 48.0, // 28mm to 33mm on 48mm height
+    maxRatio: 33.0 / 48.0,
+    targetRatio: 30.5 / 48.0,
+  },
+  eyeConstraints: {
+    minFromBottom: 0.52,
+    maxFromBottom: 0.68,
+  },
+  chinBottomClearanceMin: 7.0 / 48.0, // >= 7mm below chin
+  allowedBackgrounds: ['pure_white', 'off_white'],
+  glassesAllowed: false,
+  teethAllowed: false,
+  digitalSubmissionSpec: {
+    minWidthPx: 354,
+    maxWidthPx: 1200,
+    maxFileSizeBytes: 5 * 1024 * 1024,
+    colorSpace: 'sRGB',
+  },
+  printSheetSpec: {
+    sheetWidthInches: 6.0,
+    sheetHeightInches: 4.0,
+    dpi: 300,
+    safeMarginInches: 0.5,
+    minSeparationInches: 0.25,
+  },
+};
+
+export const MEXICO_PASSPORT_PROFILE: PhotoProfile = {
+  id: 'mexico_passport',
+  displayName: 'Mexico Passport & Visa (35×45 mm)',
+  countryCode: 'MX',
+  physicalSize: {
+    widthMm: 35.0,
+    heightMm: 45.0,
+  },
+  aspectRatio: 35.0 / 45.0,
+  headConstraints: {
+    minRatio: 30.0 / 45.0, // 30mm to 36mm on 45mm height
+    maxRatio: 36.0 / 45.0,
+    targetRatio: 33.0 / 45.0,
+  },
+  eyeConstraints: {
+    minFromBottom: 0.50,
+    maxFromBottom: 0.68,
+  },
+  chinBottomClearanceMin: 0.14,
+  allowedBackgrounds: ['pure_white', 'off_white'],
+  glassesAllowed: false,
+  teethAllowed: false,
+  digitalSubmissionSpec: {
+    minWidthPx: 600,
+    maxWidthPx: 1200,
+    maxFileSizeBytes: 10 * 1024 * 1024,
+    colorSpace: 'sRGB',
+  },
+  printSheetSpec: {
+    sheetWidthInches: 6.0,
+    sheetHeightInches: 4.0,
+    dpi: 300,
+    safeMarginInches: 0.5,
+    minSeparationInches: 0.25,
+  },
+};
+
 class ProfileRegistry {
   private profiles: Map<string, PhotoProfile> = new Map();
 
@@ -217,9 +328,12 @@ class ProfileRegistry {
 
 export const profileRegistry = new ProfileRegistry([
   US_PASSPORT_PROFILE,
+  AUSTRALIA_PASSPORT_PROFILE,
   SCHENGEN_VISA_PROFILE,
-  INDIA_OCI_PROFILE,
-  CANADA_PASSPORT_PROFILE,
   UK_PASSPORT_PROFILE,
+  CANADA_PASSPORT_PROFILE,
+  INDIA_OCI_PROFILE,
+  CHINA_VISA_PROFILE,
+  MEXICO_PASSPORT_PROFILE,
 ]);
 
