@@ -9,8 +9,6 @@ import {
   ExternalLink,
   CheckCircle2,
   RotateCcw,
-  MessageSquareHeart,
-  Send,
 } from 'lucide-react';
 import { PhotoProfile } from '../types/profile';
 import { CapturePayload } from './CameraViewfinder';
@@ -25,22 +23,20 @@ import {
   LocalPrintStore,
   StoreConnectionEvaluation,
 } from '../services/printStoreService';
-import {
-  FeedbackRating,
-  submitFeedback,
-  trackEvent,
-} from '../services/analyticsService';
+import { trackEvent } from '../services/analyticsService';
 
 interface ExportModalProps {
   profile: PhotoProfile;
   capture: CapturePayload;
   onClose: () => void;
+  onActionCompleted?: () => void;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
   profile,
   capture,
   onClose,
+  onActionCompleted,
 }) => {
   const [sheetBlob, setSheetBlob] = useState<Blob | null>(null);
   const [sheetUrl, setSheetUrl] = useState<string | null>(null);
@@ -63,11 +59,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   );
   const [connectionEval, setConnectionEval] =
     useState<StoreConnectionEvaluation | null>(null);
-  const [selectedRating, setSelectedRating] = useState<FeedbackRating | null>(
-    null
-  );
-  const [feedbackComment, setFeedbackComment] = useState<string>('');
-  const [feedbackSent, setFeedbackSent] = useState<boolean>(false);
 
   useEffect(() => {
     let createdSheetUrl: string | null = null;
@@ -200,6 +191,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           title: `4×6" Passport Print (${selectedStore.name})`,
           files: [file],
         });
+        onActionCompleted?.();
         return;
       } catch {
         // Fallback to download + portal
@@ -216,6 +208,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       '_blank',
       'noopener,noreferrer'
     );
+    onActionCompleted?.();
   };
 
   return (
@@ -305,6 +298,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <a
                 href={sheetUrl}
                 download={`${profile.id}_4x6_300dpi_print_sheet.jpg`}
+                onClick={() => onActionCompleted?.()}
                 className="h-10 px-3 rounded-full bg-[#EDF2FA] hover:bg-[#D3E3FD] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
                 data-testid="download-print-sheet-btn"
               >
@@ -316,6 +310,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <a
                 href={digitalUrl}
                 download={`${profile.id}_${digitalDims.w}x${digitalDims.h}_digital.jpg`}
+                onClick={() => onActionCompleted?.()}
                 className="h-10 px-3 rounded-full bg-[#EDF2FA] hover:bg-[#D3E3FD] text-[#041E49] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
                 data-testid="download-digital-photo-btn"
               >
@@ -436,78 +431,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               Order as a <strong>Standard 4×6&quot; Print</strong> (not Passport
               Service), then cut along the gray lines at home.
             </p>
-          </div>
-        )}
-      </div>
-
-      {/* Card 3: 1-Tap Customer Feedback */}
-      <div className="bg-white rounded-[28px] p-4 m3-elevation-1 border border-[#E1E3E1] space-y-3">
-        <div className="flex items-center gap-2">
-          <MessageSquareHeart className="w-4 h-4 text-[#0B57D0]" />
-          <h3 className="text-xs font-bold text-[#1F1F1F]">
-            How was your LocalFoto experience?
-          </h3>
-        </div>
-
-        {feedbackSent ? (
-          <div className="p-3 rounded-2xl bg-[#E6F4EA] text-[#137333] text-xs font-semibold text-center">
-            Thank you! Your feedback helps us improve LocalFoto.
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            <div className="grid grid-cols-3 gap-2">
-              {(
-                [
-                  { id: 'great', label: 'Great' },
-                  { id: 'okay', label: 'Okay' },
-                  { id: 'needs_work', label: 'Needs Work' },
-                ] as { id: FeedbackRating; label: string }[]
-              ).map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setSelectedRating(opt.id)}
-                  className={`h-9 rounded-full text-xs font-semibold border transition cursor-pointer ${
-                    selectedRating === opt.id
-                      ? 'bg-[#D3E3FD] border-[#0B57D0] text-[#041E49]'
-                      : 'bg-[#F3F6FC] border-[#E1E3E1] text-[#444746]'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            {selectedRating && (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await submitFeedback(
-                    selectedRating,
-                    feedbackComment,
-                    profile.id
-                  );
-                  setFeedbackSent(true);
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  maxLength={300}
-                  placeholder="Optional note (e.g. missing store, lighting)..."
-                  value={feedbackComment}
-                  onChange={(e) => setFeedbackComment(e.target.value)}
-                  className="flex-1 h-9 px-3 rounded-full bg-[#F3F6FC] border border-[#C4C7C5] text-xs text-[#1F1F1F] focus:outline-none focus:border-[#0B57D0]"
-                />
-                <button
-                  type="submit"
-                  className="h-9 px-4 rounded-full bg-[#0B57D0] text-white text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0"
-                >
-                  <Send className="w-3 h-3" />
-                  Send
-                </button>
-              </form>
-            )}
           </div>
         )}
       </div>

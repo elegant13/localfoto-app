@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Globe, Lock, Sun, Moon } from 'lucide-react';
+import { Globe, Lock, Sun, Moon, MessageSquare, X } from 'lucide-react';
 import { profileRegistry } from './profiles/registry';
 import { PhotoProfile } from './types/profile';
 import { CameraViewfinder, CapturePayload } from './components/CameraViewfinder';
@@ -7,9 +7,11 @@ import { ExportModal } from './components/ExportModal';
 import { HomePage } from './components/HomePage';
 import { LocalFotoLogo } from './components/LocalFotoLogo';
 import { AdminDashboard } from './components/AdminDashboard';
+import { FeedbackSheet } from './components/FeedbackSheet';
 import {
   fetchPublicStats,
   PublicStats,
+  submitFeedback,
   trackEvent,
 } from './services/analyticsService';
 
@@ -29,6 +31,12 @@ export const App: React.FC = () => {
     return false;
   });
   const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState<boolean>(false);
+  const [feedbackPromptMode, setFeedbackPromptMode] = useState<
+    'general' | 'post_export'
+  >('general');
+  const [showRetakeReasonBar, setShowRetakeReasonBar] =
+    useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('localfoto_theme');
@@ -46,7 +54,6 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Track 1 visit per browser session without storing any PII
     try {
       const alreadyTracked = window.sessionStorage.getItem('localfoto_visited');
       if (!alreadyTracked) {
@@ -83,6 +90,27 @@ export const App: React.FC = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
+  // Option 1: Trigger post-save/order feedback sheet once per session
+  const handlePostExportAction = () => {
+    try {
+      const prompted = window.sessionStorage.getItem('localfoto_fb_prompted');
+      if (prompted) return;
+      window.sessionStorage.setItem('localfoto_fb_prompted', '1');
+    } catch {
+      // Proceed if sessionStorage is unavailable
+    }
+    window.setTimeout(() => {
+      setFeedbackPromptMode('post_export');
+      setFeedbackOpen(true);
+    }, 600);
+  };
+
+  // Option 3: Capture non-blocking retake reason
+  const handleRetakeReason = async (reason: string) => {
+    setShowRetakeReasonBar(false);
+    await submitFeedback('needs_work', `Retake reason: ${reason}`, activeProfile.id);
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFD] text-[#1F1F1F] flex flex-col transition-colors duration-200">
       {/* Material Design 3 Top App Bar */}
@@ -97,6 +125,7 @@ export const App: React.FC = () => {
               setIsAdminRoute(false);
               setCapturePayload(null);
               setHasStarted(false);
+              setShowRetakeReasonBar(false);
             }}
             className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer"
             title="Return to LocalFoto Home"
@@ -115,7 +144,7 @@ export const App: React.FC = () => {
             </div>
           </button>
 
-          {/* Right Controls: Jurisdiction Pill + Light/Dark Theme Toggle */}
+          {/* Right Controls: Jurisdiction Pill + Feedback Icon + Theme Toggle */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="relative flex items-center">
               <Globe className="w-3.5 h-3.5 text-[#0B57D0] absolute left-2.5 pointer-events-none" />
@@ -126,7 +155,7 @@ export const App: React.FC = () => {
                 onChange={(e) =>
                   setActiveProfile(profileRegistry.get(e.target.value))
                 }
-                className="pl-7 pr-2.5 py-1.5 rounded-full bg-[#EDF2FA] text-[11px] font-semibold text-[#041E49] border border-[#C4C7C5]/60 focus:outline-none focus:ring-2 focus:ring-[#0B57D0] cursor-pointer transition max-w-[148px] truncate"
+                className="pl-7 pr-2.5 py-1.5 rounded-full bg-[#EDF2FA] text-[11px] font-semibold text-[#041E49] border border-[#C4C7C5]/60 focus:outline-none focus:ring-2 focus:ring-[#0B57D0] cursor-pointer transition max-w-[132px] truncate"
               >
                 {profiles.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -135,6 +164,21 @@ export const App: React.FC = () => {
                 ))}
               </select>
             </div>
+
+            {/* Option 2: Subtle Header Feedback Icon */}
+            <button
+              type="button"
+              onClick={() => {
+                setFeedbackPromptMode('general');
+                setFeedbackOpen(true);
+              }}
+              aria-label="Share feedback"
+              title="Share Feedback"
+              className="w-9 h-9 rounded-full bg-[#EDF2FA] border border-[#C4C7C5]/60 flex items-center justify-center text-[#0B57D0] cursor-pointer active:scale-95 transition"
+              data-testid="header-feedback-btn"
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
 
             <button
               type="button"
@@ -163,7 +207,36 @@ export const App: React.FC = () => {
       </header>
 
       {/* Main Mobile-First Content Area */}
-      <main className="flex-1 w-full max-w-md mx-auto px-4 py-3">
+      <main className="flex-1 w-full max-w-md mx-auto px-4 py-3 space-y-3">
+        {/* Option 3: Smart Non-Blocking Retake Reason Chip Bar */}
+        {showRetakeReasonBar && !capturePayload && !isAdminRoute && (
+          <div className="bg-[#EDF2FA] border border-[#C4C7C5]/70 rounded-2xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-semibold text-[#041E49]">
+              Retaking? What went wrong?
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {['Too zoomed in', 'Lighting', 'Hard to align'].map((reason) => (
+                <button
+                  key={reason}
+                  type="button"
+                  onClick={() => handleRetakeReason(reason)}
+                  className="px-2.5 py-1 rounded-full bg-white text-[#0B57D0] font-semibold border border-[#D3E3FD] cursor-pointer text-[11px]"
+                >
+                  {reason}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowRetakeReasonBar(false)}
+                aria-label="Dismiss retake tip"
+                className="p-1 text-[#444746] cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {isAdminRoute ? (
           <AdminDashboard
             onBack={() => {
@@ -182,16 +255,40 @@ export const App: React.FC = () => {
         ) : !capturePayload ? (
           <CameraViewfinder
             activeProfile={activeProfile}
-            onCaptureReady={(payload) => setCapturePayload(payload)}
+            onCaptureReady={(payload) => {
+              setShowRetakeReasonBar(false);
+              setCapturePayload(payload);
+            }}
           />
         ) : (
           <ExportModal
             profile={activeProfile}
             capture={capturePayload}
-            onClose={() => setCapturePayload(null)}
+            onClose={() => {
+              setCapturePayload(null);
+              setShowRetakeReasonBar(true);
+            }}
+            onActionCompleted={handlePostExportAction}
           />
         )}
       </main>
+
+      {/* Option 1 & 2: Slide-Up Feedback Bottom Sheet */}
+      <FeedbackSheet
+        isOpen={feedbackOpen}
+        title={
+          feedbackPromptMode === 'post_export'
+            ? 'Photo saved! How did it turn out?'
+            : 'Share Feedback'
+        }
+        subtitle={
+          feedbackPromptMode === 'post_export'
+            ? '1-tap rating helps us improve LocalFoto'
+            : 'Request a country or report an issue'
+        }
+        profileId={activeProfile.id}
+        onClose={() => setFeedbackOpen(false)}
+      />
     </div>
   );
 };
