@@ -16,6 +16,7 @@ export interface BiometricMesh {
   rightEyeEAR?: number;
   pitchDeg?: number;
   yawDeg?: number;
+  gazeCentered?: boolean;      // True when iris centers are aligned straight at camera lens
   backgroundDeltaL?: number;
   perimeterShadowDeltaL?: number;
   glassesConfidence?: number;  // Bridge occlusion / specular reflection metric (0..1)

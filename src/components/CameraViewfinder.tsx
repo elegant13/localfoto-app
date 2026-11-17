@@ -756,9 +756,12 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
           setLiveInstruction(msg);
           speakCue(`${msg}. ${lensReminder}`);
         } else if (!validationReport.isPitchYawCompliant) {
-          const msg = 'Look straight into the camera lens';
+          const msg =
+            facingMode === 'user'
+              ? 'Look UP at the camera lens — not at the screen'
+              : 'Look straight into the rear camera lens';
           setLiveInstruction(msg);
-          speakCue(`${msg}, not at the screen.`);
+          speakCue(msg);
         } else if (!validationReport.isMouthClosed) {
           const msg = 'Keep a neutral expression with mouth closed';
           setLiveInstruction(msg);

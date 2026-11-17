@@ -253,6 +253,31 @@ function extractMeshFromMediaPipe(
     pitchDeg = (actualNoseRatio - 0.62) * 45;
   }
 
+  // Estimate gaze alignment using iris centers (468, 473) relative to eye corners (33/133, 362/263)
+  let gazeCentered = true;
+  if (lm[468] && lm[473] && lm[33] && lm[133] && lm[362] && lm[263]) {
+    const leftEyeW = Math.max(1e-5, Math.abs(lm[133].x - lm[33].x));
+    const leftEyeMinX = Math.min(lm[33].x, lm[133].x);
+    const leftIrisRatioX = (lm[468].x - leftEyeMinX) / leftEyeW;
+
+    const rightEyeW = Math.max(1e-5, Math.abs(lm[263].x - lm[362].x));
+    const rightEyeMinX = Math.min(lm[362].x, lm[263].x);
+    const rightIrisRatioX = (lm[473].x - rightEyeMinX) / rightEyeW;
+
+    const avgIrisX = (leftIrisRatioX + rightIrisRatioX) / 2;
+
+    const leftEyeH = Math.max(1e-5, Math.abs(lm[145].y - lm[159].y));
+    const leftIrisRatioY = (lm[468].y - lm[159].y) / leftEyeH;
+    const rightEyeH = Math.max(1e-5, Math.abs(lm[374].y - lm[386].y));
+    const rightIrisRatioY = (lm[473].y - lm[386].y) / rightEyeH;
+    const avgIrisY = (leftIrisRatioY + rightIrisRatioY) / 2;
+
+    // Looking off to the side (< 0.36 or > 0.64) or looking down at screen (> 0.68) fails gaze lock
+    if (avgIrisX < 0.36 || avgIrisX > 0.64 || avgIrisY < 0.25 || avgIrisY > 0.68) {
+      gazeCentered = false;
+    }
+  }
+
   const faceHeightEst = Math.max(10, chinTip.y - skullForehead.y);
   let segmentationCrownY = Math.max(
     0,
@@ -353,6 +378,7 @@ function extractMeshFromMediaPipe(
     rightEyeEAR,
     pitchDeg,
     yawDeg,
+    gazeCentered,
     backgroundDeltaL,
     perimeterShadowDeltaL,
     glassesConfidence,

@@ -391,8 +391,9 @@ export function evaluateBiometricValidation(
 
   const pitchDeg = mesh.pitchDeg ?? 0;
   const yawDeg = mesh.yawDeg ?? 0;
+  const gazeCentered = mesh.gazeCentered ?? true;
   const isPitchYawCompliant =
-    Math.abs(pitchDeg) <= 5.0 && Math.abs(yawDeg) <= 5.0;
+    Math.abs(pitchDeg) <= 5.0 && Math.abs(yawDeg) <= 5.0 && gazeCentered;
 
   const ipd = Math.max(1, getInterPupillaryDistance(mesh));
   const interLipDistance = Math.hypot(

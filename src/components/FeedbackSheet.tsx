@@ -44,14 +44,14 @@ export const FeedbackSheet: React.FC<FeedbackSheetProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Customer Feedback"
     >
       <div
-        className="w-full max-w-md bg-white rounded-t-[28px] sm:rounded-[28px] p-5 m3-elevation-3 border border-[#E1E3E1] space-y-4 animate-in slide-in-from-bottom duration-200"
+        className="w-full max-w-md bg-white rounded-[28px] p-5 m3-elevation-3 border border-[#E1E3E1] space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
