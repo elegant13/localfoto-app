@@ -8,6 +8,8 @@ export interface PublicStats {
 export interface AdminStatsResponse {
   totalVisitors: number;
   totalPhotos: number;
+  ownerPhotos: number;
+  externalPhotos: number;
   byProfile: { profile_id: string; count: number }[];
   byZip: {
     zip_code: string;
@@ -24,6 +26,8 @@ export interface AdminStatsResponse {
     profile_id: string;
     zip_code: string;
     city: string;
+    region?: string | null;
+    country?: string | null;
     created_at: string;
   }[];
 }

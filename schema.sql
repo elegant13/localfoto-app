@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS feedback (
   profile_id TEXT,
   zip_code TEXT,
   city TEXT,
+  region TEXT,
+  country TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

@@ -9,6 +9,8 @@ import {
   ArrowLeft,
   LogOut,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   AdminStatsResponse,
@@ -21,8 +23,44 @@ interface AdminDashboardProps {
 
 const SESSION_KEY = 'localfoto_admin_token';
 
+function isOwnerRegion(
+  zipCode?: string | null,
+  city?: string | null,
+  region?: string | null
+): boolean {
+  const zip = (zipCode || '').trim();
+  const c = (city || '').toLowerCase();
+  const r = (region || '').toLowerCase();
+  return zip === '20105' || c.includes('arcola') || r.includes('arcola');
+}
+
+function formatFeedbackLocation(fb: {
+  zip_code?: string | null;
+  city?: string | null;
+  region?: string | null;
+  country?: string | null;
+}): string {
+  const clean = (v?: string | null) => (v && v !== 'Unknown' ? v.trim() : '');
+  const zip = clean(fb.zip_code);
+  const city = clean(fb.city);
+  const region = clean(fb.region);
+  const country = clean(fb.country);
+
+  const cityState = [city, region].filter(Boolean).join(', ');
+  const geoWithCountry = cityState
+    ? [cityState, country].filter(Boolean).join(', ')
+    : '';
+
+  if (zip && geoWithCountry) return `${zip} (${geoWithCountry})`;
+  if (zip) return zip;
+  if (geoWithCountry) return geoWithCountry;
+  if (country) return country;
+  return 'Unknown location';
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [passwordInput, setPasswordInput] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [authToken, setAuthToken] = useState<string>(() => {
     try {
       return window.sessionStorage.getItem(SESSION_KEY) || '';
@@ -143,14 +181,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
             </div>
           </div>
 
-          <input
-            type="password"
-            placeholder="Enter Admin Password"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-            className="w-full h-12 px-4 rounded-2xl bg-[#F3F6FC] border border-[#C4C7C5] text-sm text-[#1F1F1F] focus:outline-none focus:border-[#0B57D0]"
-            autoComplete="current-password"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Enter Admin Password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              className="w-full h-12 pl-4 pr-20 rounded-2xl bg-[#F3F6FC] border border-[#C4C7C5] text-sm text-[#1F1F1F] focus:outline-none focus:border-[#0B57D0]"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-2.5 rounded-full bg-[#EDF2FA] hover:bg-[#E1E8F5] text-[#041E49] text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              {showPassword ? (
+                <EyeOff className="w-3.5 h-3.5" />
+              ) : (
+                <Eye className="w-3.5 h-3.5" />
+              )}
+              <span>{showPassword ? 'Hide' : 'Show'}</span>
+            </button>
+          </div>
 
           {errorMsg && (
             <div className="p-3 rounded-2xl bg-[#FEF7E0] border border-[#F59E0B]/40 text-xs text-[#8C4A00] flex items-start gap-2">
@@ -184,9 +237,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
             <div className="bg-white rounded-2xl p-3.5 m3-elevation-1 border border-[#E1E3E1]">
               <Camera className="w-4 h-4 text-[#137333] mb-1" />
               <div className="text-xl font-extrabold text-[#1F1F1F]">
-                {stats.totalPhotos}
+                {stats.externalPhotos}
               </div>
-              <div className="text-[11px] text-[#444746]">Photos</div>
+              <div className="text-[11px] text-[#444746]">Customer Photos</div>
+              <div className="text-[10px] text-[#8C4A00] font-semibold mt-0.5">
+                +{stats.ownerPhotos} owner (20105)
+              </div>
             </div>
             <div className="bg-white rounded-2xl p-3.5 m3-elevation-1 border border-[#E1E3E1]">
               <MessageSquare className="w-4 h-4 text-[#8C4A00] mb-1" />
@@ -228,31 +284,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
               <p className="text-xs text-[#444746]">No location data yet.</p>
             ) : (
               <div className="divide-y divide-[#E1E3E1] text-xs">
-                {stats.byZip.map((row, idx) => (
-                  <div
-                    key={`${row.zip_code}-${idx}`}
-                    className="py-2 flex items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-bold text-[#1F1F1F]">
-                        {row.zip_code}
+                {stats.byZip.map((row, idx) => {
+                  const ownerRow = isOwnerRegion(
+                    row.zip_code,
+                    row.city,
+                    row.region
+                  );
+                  return (
+                    <div
+                      key={`${row.zip_code}-${idx}`}
+                      className="py-2 flex items-center justify-between gap-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-bold text-[#1F1F1F] flex items-center gap-1.5">
+                          <span>{row.zip_code}</span>
+                          {ownerRow && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-[#FEF7E0] text-[#8C4A00] text-[10px] font-bold">
+                              Owner
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-[#444746] truncate">
+                          {[row.city, row.region, row.country]
+                            .filter((v) => v && v !== 'Unknown')
+                            .join(', ') || 'Coarse Edge Location'}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-[#444746] truncate">
-                        {[row.city, row.region, row.country]
-                          .filter((v) => v && v !== 'Unknown')
-                          .join(', ') || 'Coarse Edge Location'}
+                      <div className="text-right shrink-0">
+                        <span className="font-semibold text-[#0B57D0]">
+                          {row.visits} visits
+                        </span>
+                        <span className="block text-[11px] text-[#137333]">
+                          {row.photos} photos
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-semibold text-[#0B57D0]">
-                        {row.visits} visits
-                      </span>
-                      <span className="block text-[11px] text-[#137333]">
-                        {row.photos} photos
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -283,8 +351,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
                       >
                         {fb.rating.replace('_', ' ')}
                       </span>
-                      <span className="text-[10px] text-[#444746]">
-                        {fb.zip_code} • {fb.created_at.slice(0, 10)}
+                      <span className="text-[10px] text-[#444746] text-right">
+                        {formatFeedbackLocation(fb)} • {fb.created_at.slice(0, 10)}
                       </span>
                     </div>
                     {fb.comment && (

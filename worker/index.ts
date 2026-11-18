@@ -37,6 +37,27 @@ function extractCoarseGeo(request: Request, explicitZip?: string): {
   return { zipCode: zip || 'Unknown', city, region, country };
 }
 
+let feedbackGeoChecked = false;
+
+async function ensureFeedbackGeoColumns(db: D1Database): Promise<void> {
+  if (feedbackGeoChecked) return;
+  try {
+    const info = await db
+      .prepare('PRAGMA table_info(feedback)')
+      .all<{ name: string }>();
+    const cols = new Set((info.results ?? []).map((c) => c.name));
+    if (!cols.has('region')) {
+      await db.prepare('ALTER TABLE feedback ADD COLUMN region TEXT').run();
+    }
+    if (!cols.has('country')) {
+      await db.prepare('ALTER TABLE feedback ADD COLUMN country TEXT').run();
+    }
+    feedbackGeoChecked = true;
+  } catch {
+    // Do not block requests if schema migration check fails
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -104,11 +125,21 @@ export default {
         const profileId = (body.profileId || 'us_passport').slice(0, 32);
         const geo = extractCoarseGeo(request);
 
+        await ensureFeedbackGeoColumns(env.DB);
+
         await env.DB.prepare(
-          `INSERT INTO feedback (rating, comment, profile_id, zip_code, city)
-           VALUES (?1, ?2, ?3, ?4, ?5)`
+          `INSERT INTO feedback (rating, comment, profile_id, zip_code, city, region, country)
+           VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
         )
-          .bind(rating, comment, profileId, geo.zipCode, geo.city)
+          .bind(
+            rating,
+            comment,
+            profileId,
+            geo.zipCode,
+            geo.city,
+            geo.region,
+            geo.country
+          )
           .run();
 
         return jsonResponse({ ok: true, stored: true });
@@ -166,12 +197,19 @@ export default {
       }
 
       try {
+        await ensureFeedbackGeoColumns(env.DB);
+
         const totals = await env.DB.prepare(
           `SELECT
              SUM(CASE WHEN event_type = 'visit' THEN 1 ELSE 0 END) AS totalVisitors,
-             SUM(CASE WHEN event_type = 'photo_generated' THEN 1 ELSE 0 END) AS totalPhotos
+             SUM(CASE WHEN event_type = 'photo_generated' THEN 1 ELSE 0 END) AS totalPhotos,
+             SUM(CASE WHEN event_type = 'photo_generated' AND (zip_code = '20105' OR LOWER(COALESCE(city, '')) LIKE '%arcola%' OR LOWER(COALESCE(region, '')) LIKE '%arcola%') THEN 1 ELSE 0 END) AS ownerPhotos
            FROM events`
-        ).first<{ totalVisitors: number | null; totalPhotos: number | null }>();
+        ).first<{
+          totalVisitors: number | null;
+          totalPhotos: number | null;
+          ownerPhotos: number | null;
+        }>();
 
         const byProfileRes = await env.DB.prepare(
           `SELECT profile_id, COUNT(*) AS count
@@ -203,7 +241,7 @@ export default {
         }>();
 
         const feedbackRes = await env.DB.prepare(
-          `SELECT id, rating, comment, profile_id, zip_code, city, created_at
+          `SELECT id, rating, comment, profile_id, zip_code, city, region, country, created_at
            FROM feedback
            ORDER BY id DESC
            LIMIT 50`
@@ -214,12 +252,20 @@ export default {
           profile_id: string;
           zip_code: string;
           city: string;
+          region: string | null;
+          country: string | null;
           created_at: string;
         }>();
 
+        const totalPhotos = Number(totals?.totalPhotos ?? 0);
+        const ownerPhotos = Number(totals?.ownerPhotos ?? 0);
+        const externalPhotos = Math.max(0, totalPhotos - ownerPhotos);
+
         return jsonResponse({
           totalVisitors: Number(totals?.totalVisitors ?? 0),
-          totalPhotos: Number(totals?.totalPhotos ?? 0),
+          totalPhotos,
+          ownerPhotos,
+          externalPhotos,
           byProfile: byProfileRes.results ?? [],
           byZip: byZipRes.results ?? [],
           recentFeedback: feedbackRes.results ?? [],
