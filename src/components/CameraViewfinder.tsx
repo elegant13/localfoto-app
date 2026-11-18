@@ -1018,7 +1018,7 @@ export const CameraViewfinder: React.FC<CameraViewfinderProps> = ({
             {showRetakeReasonBar && (
               <div className="bg-[#EDF2FA] border border-[#C4C7C5]/70 rounded-2xl px-3 py-2 flex flex-wrap items-center justify-between gap-1.5 text-xs">
                 <span className="font-semibold text-[#041E49] text-[11px]">
-                  Retaking? Why:
+                  Retaking? One tap helps improve LocalFoto:
                 </span>
                 <div className="flex flex-wrap items-center gap-1">
                   {['Too zoomed in', 'Lighting', 'Alignment'].map((reason) => (
