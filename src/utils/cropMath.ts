@@ -272,8 +272,8 @@ export function solveConstrainedCrop(
   const hMaxFromHead = headHeightPx / minRatio;
   const hTarget = headHeightPx / targetRatio;
 
-  // Ensure enough top headroom (>= 6% for portrait formats, >= 3% for 1:1) and chin-to-bottom shoulder clearance
-  const minTopHeadroom = profile.aspectRatio < 0.9 ? 0.06 : 0.03;
+  // Ensure enough top headroom (>= 7% for 1:1, >= 6% for portrait formats) and chin-to-bottom shoulder clearance
+  const minTopHeadroom = profile.aspectRatio < 0.9 ? 0.06 : 0.07;
   const hMinFromClearance =
     headHeightPx / Math.max(0.2, 1 - minTopHeadroom - chinClearanceMin);
 
@@ -348,11 +348,33 @@ export function solveConstrainedCrop(
   let xMin = xCenter - cropWidth / 2;
   let yMin = bestYMin;
 
-  // Clamp horizontal and vertical positions within imageBounds to avoid white edge slivers
-  if (imageBounds.width >= cropWidth) {
+  // Clamp horizontal and vertical positions within imageBounds (accounting for roll rotation) to avoid white edge slivers
+  const theta = (Math.abs(rollCorrectionDeg) * Math.PI) / 180;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const insetX = Math.max(
+    0,
+    (cropWidth / 2) * cosT + (cropHeight / 2) * sinT - cropWidth / 2
+  );
+  const insetY = Math.max(
+    0,
+    (cropWidth / 2) * sinT + (cropHeight / 2) * cosT - cropHeight / 2
+  );
+
+  if (imageBounds.width >= cropWidth + 2 * insetX) {
+    xMin = Math.max(
+      insetX,
+      Math.min(imageBounds.width - cropWidth - insetX, xMin)
+    );
+  } else if (imageBounds.width >= cropWidth) {
     xMin = Math.max(0, Math.min(imageBounds.width - cropWidth, xMin));
   }
-  if (imageBounds.height >= cropHeight) {
+  if (imageBounds.height >= cropHeight + 2 * insetY) {
+    yMin = Math.max(
+      insetY,
+      Math.min(imageBounds.height - cropHeight - insetY, yMin)
+    );
+  } else if (imageBounds.height >= cropHeight) {
     yMin = Math.max(0, Math.min(imageBounds.height - cropHeight, yMin));
   }
 
