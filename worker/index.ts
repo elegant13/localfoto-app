@@ -199,25 +199,40 @@ export default {
       try {
         await ensureFeedbackGeoColumns(env.DB);
 
+        const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+        const todayIso = new Date().toISOString().slice(0, 10);
+        const rawStart = url.searchParams.get('start') || '';
+        const rawEnd = url.searchParams.get('end') || '';
+        const startDate = dateRe.test(rawStart) ? rawStart : '2026-11-16';
+        const endDate = dateRe.test(rawEnd) ? rawEnd : todayIso;
+        const startTs = `${startDate} 00:00:00`;
+        const endTs = `${endDate} 23:59:59`;
+
         const totals = await env.DB.prepare(
           `SELECT
              SUM(CASE WHEN event_type = 'visit' THEN 1 ELSE 0 END) AS totalVisitors,
              SUM(CASE WHEN event_type = 'photo_generated' THEN 1 ELSE 0 END) AS totalPhotos,
              SUM(CASE WHEN event_type = 'photo_generated' AND (zip_code = '20105' OR LOWER(COALESCE(city, '')) LIKE '%arcola%' OR LOWER(COALESCE(region, '')) LIKE '%arcola%') THEN 1 ELSE 0 END) AS ownerPhotos
-           FROM events`
-        ).first<{
-          totalVisitors: number | null;
-          totalPhotos: number | null;
-          ownerPhotos: number | null;
-        }>();
+           FROM events
+           WHERE created_at >= ?1 AND created_at <= ?2`
+        )
+          .bind(startTs, endTs)
+          .first<{
+            totalVisitors: number | null;
+            totalPhotos: number | null;
+            ownerPhotos: number | null;
+          }>();
 
         const byProfileRes = await env.DB.prepare(
           `SELECT profile_id, COUNT(*) AS count
            FROM events
            WHERE event_type = 'photo_generated'
+             AND created_at >= ?1 AND created_at <= ?2
            GROUP BY profile_id
            ORDER BY count DESC`
-        ).all<{ profile_id: string; count: number }>();
+        )
+          .bind(startTs, endTs)
+          .all<{ profile_id: string; count: number }>();
 
         const byZipRes = await env.DB.prepare(
           `SELECT
@@ -228,46 +243,74 @@ export default {
              SUM(CASE WHEN event_type = 'visit' THEN 1 ELSE 0 END) AS visits,
              SUM(CASE WHEN event_type = 'photo_generated' THEN 1 ELSE 0 END) AS photos
            FROM events
+           WHERE created_at >= ?1 AND created_at <= ?2
            GROUP BY zip_code
            ORDER BY (visits + photos) DESC
            LIMIT 50`
-        ).all<{
-          zip_code: string;
-          city: string;
-          region: string;
-          country: string;
-          visits: number;
-          photos: number;
-        }>();
+        )
+          .bind(startTs, endTs)
+          .all<{
+            zip_code: string;
+            city: string;
+            region: string;
+            country: string;
+            visits: number;
+            photos: number;
+          }>();
+
+        const timelineRes = await env.DB.prepare(
+          `SELECT
+             substr(created_at, 1, 10) AS day,
+             SUM(CASE WHEN event_type = 'visit' THEN 1 ELSE 0 END) AS visits,
+             SUM(CASE WHEN event_type = 'photo_generated' AND NOT (zip_code = '20105' OR LOWER(COALESCE(city, '')) LIKE '%arcola%' OR LOWER(COALESCE(region, '')) LIKE '%arcola%') THEN 1 ELSE 0 END) AS externalPhotos,
+             SUM(CASE WHEN event_type = 'photo_generated' AND (zip_code = '20105' OR LOWER(COALESCE(city, '')) LIKE '%arcola%' OR LOWER(COALESCE(region, '')) LIKE '%arcola%') THEN 1 ELSE 0 END) AS ownerPhotos
+           FROM events
+           WHERE created_at >= ?1 AND created_at <= ?2
+           GROUP BY day
+           ORDER BY day DESC`
+        )
+          .bind(startTs, endTs)
+          .all<{
+            day: string;
+            visits: number;
+            externalPhotos: number;
+            ownerPhotos: number;
+          }>();
 
         const feedbackRes = await env.DB.prepare(
           `SELECT id, rating, comment, profile_id, zip_code, city, region, country, created_at
            FROM feedback
+           WHERE created_at >= ?1 AND created_at <= ?2
            ORDER BY id DESC
            LIMIT 50`
-        ).all<{
-          id: number;
-          rating: string;
-          comment: string;
-          profile_id: string;
-          zip_code: string;
-          city: string;
-          region: string | null;
-          country: string | null;
-          created_at: string;
-        }>();
+        )
+          .bind(startTs, endTs)
+          .all<{
+            id: number;
+            rating: string;
+            comment: string;
+            profile_id: string;
+            zip_code: string;
+            city: string;
+            region: string | null;
+            country: string | null;
+            created_at: string;
+          }>();
 
         const totalPhotos = Number(totals?.totalPhotos ?? 0);
         const ownerPhotos = Number(totals?.ownerPhotos ?? 0);
         const externalPhotos = Math.max(0, totalPhotos - ownerPhotos);
 
         return jsonResponse({
+          startDate,
+          endDate,
           totalVisitors: Number(totals?.totalVisitors ?? 0),
           totalPhotos,
           ownerPhotos,
           externalPhotos,
           byProfile: byProfileRes.results ?? [],
           byZip: byZipRes.results ?? [],
+          timeline: timelineRes.results ?? [],
           recentFeedback: feedbackRes.results ?? [],
         });
       } catch {

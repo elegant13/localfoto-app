@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Calendar,
 } from 'lucide-react';
 import {
   AdminStatsResponse,
@@ -22,6 +23,12 @@ interface AdminDashboardProps {
 }
 
 const SESSION_KEY = 'localfoto_admin_token';
+const MIN_START_DATE = '2026-11-16';
+
+function getUtcDateOffset(daysOffset = 0): string {
+  const d = new Date(Date.now() + daysOffset * 86_400_000);
+  return d.toISOString().slice(0, 10);
+}
 
 function isOwnerRegion(
   zipCode?: string | null,
@@ -61,6 +68,8 @@ function formatFeedbackLocation(fb: {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<string>(MIN_START_DATE);
+  const [endDate, setEndDate] = useState<string>(() => getUtcDateOffset(0));
   const [authToken, setAuthToken] = useState<string>(() => {
     try {
       return window.sessionStorage.getItem(SESSION_KEY) || '';
@@ -72,32 +81,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const loadStats = useCallback(async (tokenToUse: string) => {
-    if (!tokenToUse) return;
-    setLoading(true);
-    setErrorMsg(null);
-    const res = await fetchAdminStats(tokenToUse);
-    setLoading(false);
-    if (res.ok && res.data) {
-      setStats(res.data);
-      try {
-        window.sessionStorage.setItem(SESSION_KEY, tokenToUse);
-      } catch {
-        // Ignore storage errors
-      }
-    } else {
-      setStats(null);
-      setErrorMsg(res.error || 'Authentication failed.');
-      if (res.status === 401) {
-        setAuthToken('');
+  const loadStats = useCallback(
+    async (tokenToUse: string, start = startDate, end = endDate) => {
+      if (!tokenToUse) return;
+      setLoading(true);
+      setErrorMsg(null);
+      const res = await fetchAdminStats(tokenToUse, start, end);
+      setLoading(false);
+      if (res.ok && res.data) {
+        setStats(res.data);
         try {
-          window.sessionStorage.removeItem(SESSION_KEY);
+          window.sessionStorage.setItem(SESSION_KEY, tokenToUse);
         } catch {
           // Ignore storage errors
         }
+      } else {
+        setStats(null);
+        setErrorMsg(res.error || 'Authentication failed.');
+        if (res.status === 401) {
+          setAuthToken('');
+          try {
+            window.sessionStorage.removeItem(SESSION_KEY);
+          } catch {
+            // Ignore storage errors
+          }
+        }
       }
+    },
+    [startDate, endDate]
+  );
+
+  const applyDateRange = (newStart: string, newEnd: string) => {
+    const safeStart = newStart < MIN_START_DATE ? MIN_START_DATE : newStart;
+    const safeEnd = newEnd < safeStart ? safeStart : newEnd;
+    setStartDate(safeStart);
+    setEndDate(safeEnd);
+    if (authToken) {
+      loadStats(authToken, safeStart, safeEnd);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (authToken) {
@@ -225,6 +247,85 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
       {/* Authenticated Dashboard */}
       {stats && (
         <div className="space-y-4">
+          {/* Timeline Filter */}
+          <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-[#1F1F1F] flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-[#0B57D0]" />
+                Timeline Filter
+              </h3>
+              <div className="flex items-center gap-1">
+                {[
+                  {
+                    label: 'Since 11/16',
+                    start: MIN_START_DATE,
+                    end: getUtcDateOffset(0),
+                  },
+                  {
+                    label: 'Today',
+                    start: getUtcDateOffset(0),
+                    end: getUtcDateOffset(0),
+                  },
+                  {
+                    label: 'Yesterday',
+                    start: getUtcDateOffset(-1),
+                    end: getUtcDateOffset(-1),
+                  },
+                ].map((preset) => {
+                  const active =
+                    startDate === preset.start && endDate === preset.end;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => applyDateRange(preset.start, preset.end)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition cursor-pointer ${
+                        active
+                          ? 'bg-[#0B57D0] text-white'
+                          : 'bg-[#EDF2FA] text-[#041E49] hover:bg-[#E1E8F5]'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-[#444746]">
+                  From
+                </span>
+                <input
+                  type="date"
+                  min={MIN_START_DATE}
+                  max={getUtcDateOffset(0)}
+                  value={startDate}
+                  onChange={(e) =>
+                    e.target.value && applyDateRange(e.target.value, endDate)
+                  }
+                  className="w-full h-9 px-2.5 rounded-xl bg-[#F3F6FC] border border-[#C4C7C5] text-xs text-[#1F1F1F] focus:outline-none focus:border-[#0B57D0]"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-[#444746]">
+                  To
+                </span>
+                <input
+                  type="date"
+                  min={startDate}
+                  max={getUtcDateOffset(0)}
+                  value={endDate}
+                  onChange={(e) =>
+                    e.target.value && applyDateRange(startDate, e.target.value)
+                  }
+                  className="w-full h-9 px-2.5 rounded-xl bg-[#F3F6FC] border border-[#C4C7C5] text-xs text-[#1F1F1F] focus:outline-none focus:border-[#0B57D0]"
+                />
+              </label>
+            </div>
+          </div>
+
           {/* KPI Row */}
           <div className="grid grid-cols-3 gap-2.5">
             <div className="bg-white rounded-2xl p-3.5 m3-elevation-1 border border-[#E1E3E1]">
@@ -252,6 +353,59 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
               <div className="text-[11px] text-[#444746]">Feedback</div>
             </div>
           </div>
+
+          {/* Daily Timeline */}
+          {stats.timeline && stats.timeline.length > 0 && (
+            <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-[#1F1F1F]">
+                  Daily Breakdown
+                </h3>
+                <span className="text-[10px] text-[#444746]">
+                  Tap a day to isolate
+                </span>
+              </div>
+              <div className="divide-y divide-[#E1E3E1] text-xs">
+                {stats.timeline.map((row) => {
+                  const isSelectedSingleDay =
+                    startDate === row.day && endDate === row.day;
+                  return (
+                    <button
+                      key={row.day}
+                      type="button"
+                      onClick={() =>
+                        isSelectedSingleDay
+                          ? applyDateRange(MIN_START_DATE, getUtcDateOffset(0))
+                          : applyDateRange(row.day, row.day)
+                      }
+                      className={`w-full py-2 px-2 -mx-2 rounded-xl flex items-center justify-between gap-2 text-left transition cursor-pointer ${
+                        isSelectedSingleDay
+                          ? 'bg-[#D3E3FD]/50'
+                          : 'hover:bg-[#F3F6FC]'
+                      }`}
+                    >
+                      <span className="font-bold text-[#1F1F1F]">
+                        {row.day}
+                      </span>
+                      <div className="flex items-center gap-3 text-[11px]">
+                        <span className="font-semibold text-[#0B57D0]">
+                          {row.visits} visits
+                        </span>
+                        <span className="font-semibold text-[#137333]">
+                          {row.externalPhotos} cust
+                        </span>
+                        {row.ownerPhotos > 0 && (
+                          <span className="font-semibold text-[#8C4A00]">
+                            +{row.ownerPhotos} own
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* By Photo Profile */}
           <div className="bg-white rounded-[24px] p-4 m3-elevation-1 border border-[#E1E3E1] space-y-2.5">

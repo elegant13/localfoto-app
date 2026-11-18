@@ -5,7 +5,16 @@ export interface PublicStats {
   totalPhotos: number;
 }
 
+export interface TimelineDayRow {
+  day: string;
+  visits: number;
+  externalPhotos: number;
+  ownerPhotos: number;
+}
+
 export interface AdminStatsResponse {
+  startDate: string;
+  endDate: string;
   totalVisitors: number;
   totalPhotos: number;
   ownerPhotos: number;
@@ -19,6 +28,7 @@ export interface AdminStatsResponse {
     visits: number;
     photos: number;
   }[];
+  timeline: TimelineDayRow[];
   recentFeedback: {
     id: number;
     rating: FeedbackRating;
@@ -90,7 +100,9 @@ export async function submitFeedback(
 }
 
 export async function fetchAdminStats(
-  password: string
+  password: string,
+  startDate?: string,
+  endDate?: string
 ): Promise<{
   ok: boolean;
   status: number;
@@ -98,7 +110,11 @@ export async function fetchAdminStats(
   error?: string;
 }> {
   try {
-    const res = await fetch('/api/stats/admin', {
+    const params = new URLSearchParams();
+    if (startDate) params.set('start', startDate);
+    if (endDate) params.set('end', endDate);
+    const qs = params.toString();
+    const res = await fetch(`/api/stats/admin${qs ? `?${qs}` : ''}`, {
       headers: {
         Authorization: `Bearer ${password}`,
       },
