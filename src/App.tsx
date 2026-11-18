@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Globe, Lock, Sun, Moon, MessageSquare } from 'lucide-react';
+import { Globe, Lock, Sun, Moon, MessageSquare, WifiOff } from 'lucide-react';
 import { profileRegistry } from './profiles/registry';
 import { PhotoProfile } from './types/profile';
 import { CameraViewfinder, CapturePayload } from './components/CameraViewfinder';
@@ -8,6 +8,7 @@ import { HomePage } from './components/HomePage';
 import { LocalFotoLogo } from './components/LocalFotoLogo';
 import { AdminDashboard } from './components/AdminDashboard';
 import { FeedbackSheet } from './components/FeedbackSheet';
+import { PrivacySheet } from './components/PrivacySheet';
 import {
   fetchPublicStats,
   PublicStats,
@@ -32,6 +33,10 @@ export const App: React.FC = () => {
   });
   const [publicStats, setPublicStats] = useState<PublicStats | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState<boolean>(false);
+  const [privacyOpen, setPrivacyOpen] = useState<boolean>(false);
+  const [isOffline, setIsOffline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
   const [feedbackPromptMode, setFeedbackPromptMode] = useState<
     'general' | 'post_export'
   >('general');
@@ -44,6 +49,17 @@ export const App: React.FC = () => {
     }
     return 'light';
   });
+
+  useEffect(() => {
+    const onOnline = () => setIsOffline(false);
+    const onOffline = () => setIsOffline(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -116,33 +132,42 @@ export const App: React.FC = () => {
       {/* Material Design 3 Top App Bar */}
       <header className="sticky top-0 z-30 bg-[#F8FAFD]/95 backdrop-blur-md border-b border-[#E1E3E1] transition-colors duration-200">
         <div className="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (window.location.hash === '#admin') {
-                window.location.hash = '';
-              }
-              setIsAdminRoute(false);
-              setCapturePayload(null);
-              setHasStarted(false);
-              setShowRetakeReasonBar(false);
-            }}
-            className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer"
-            title="Return to LocalFoto Home"
-          >
-            <LocalFotoLogo className="w-9 h-9 shrink-0 shadow-xs rounded-xl" />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-base font-extrabold tracking-tight text-[#1F1F1F] truncate">
-                  LocalFoto
-                </h1>
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E6F4EA] text-[#137333]">
-                  <Lock className="w-2.5 h-2.5" />
-                  Private
-                </span>
-              </div>
-            </div>
-          </button>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.location.hash === '#admin') {
+                  window.location.hash = '';
+                }
+                setIsAdminRoute(false);
+                setCapturePayload(null);
+                setHasStarted(false);
+                setShowRetakeReasonBar(false);
+              }}
+              className="flex items-center gap-2 min-w-0 text-left cursor-pointer"
+              title="Return to LocalFoto Home"
+            >
+              <LocalFotoLogo className="w-9 h-9 shrink-0 shadow-xs rounded-xl" />
+              <h1 className="text-base font-extrabold tracking-tight text-[#1F1F1F] truncate">
+                LocalFoto
+              </h1>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPrivacyOpen(true)}
+              title="View On-Device Privacy Guarantee & Airplane Mode Test"
+              aria-label="View On-Device Privacy Guarantee"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E6F4EA] hover:bg-[#CEEAD6] text-[#137333] cursor-pointer active:scale-95 transition shrink-0"
+              data-testid="private-pill-btn"
+            >
+              {isOffline ? (
+                <WifiOff className="w-2.5 h-2.5" />
+              ) : (
+                <Lock className="w-2.5 h-2.5" />
+              )}
+              <span>{isOffline ? 'Offline · Private' : 'Private'}</span>
+            </button>
+          </div>
 
           {/* Right Controls: Jurisdiction Pill + Feedback Icon + Theme Toggle */}
           <div className="flex items-center gap-1.5 shrink-0">
@@ -262,6 +287,11 @@ export const App: React.FC = () => {
         }
         profileId={activeProfile.id}
         onClose={() => setFeedbackOpen(false)}
+      />
+
+      <PrivacySheet
+        isOpen={privacyOpen}
+        onClose={() => setPrivacyOpen(false)}
       />
     </div>
   );

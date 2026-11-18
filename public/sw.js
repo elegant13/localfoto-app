@@ -1,5 +1,7 @@
-const CACHE_NAME = 'localfoto-pwa-v2';
+const CACHE_NAME = 'localfoto-pwa-v3';
 const OFFLINE_ASSETS = [
+  '/',
+  '/favicon.svg',
   '/manifest.json',
   '/models/manifest.json',
   '/models/face_landmarker.task',
@@ -31,6 +33,9 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  // Never cache API responses
+  if (url.pathname.startsWith('/api/')) return;
 
   // Cache-first only for static heavy ML models in /models/
   if (url.pathname.startsWith('/models/')) {
