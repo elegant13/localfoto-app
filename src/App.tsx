@@ -278,12 +278,12 @@ export const App: React.FC = () => {
         title={
           feedbackPromptMode === 'post_export'
             ? 'Did the photo pass your expectations?'
-            : 'Share Feedback'
+            : 'How\'s LocalFoto working?'
         }
         subtitle={
           feedbackPromptMode === 'post_export'
             ? 'A 5-second rating can be a pat on the back or an improvement opportunity.'
-            : 'One click and a few words is all it takes. What worked—or didn\'t?'
+            : 'One click and a few words—tell us what worked or didn\'t.'
         }
         profileId={activeProfile.id}
         onClose={() => setFeedbackOpen(false)}
